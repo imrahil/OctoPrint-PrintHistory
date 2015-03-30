@@ -74,4 +74,4 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
 
 __plugin_name__ = "Print History Plugin"
-__plugin_implementations__ = [PrintHistoryPlugin()]
+__plugin_implementation__ = PrintHistoryPlugin()
