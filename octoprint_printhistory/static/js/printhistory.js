@@ -52,6 +52,15 @@ $(function() {
             self.isPrinting(isPrinting);
         };
 
+        self.removeFile = function(key) {
+            $.ajax({
+                url: "plugin/printhistory/history/" + key,
+                type: "DELETE",
+                dataType: "json",
+                success: self.requestData
+            });
+        };
+
         self.requestData = function() {
             $.ajax({
                 url: "plugin/printhistory/history",
@@ -72,6 +81,7 @@ $(function() {
 
             _.each(_.keys(pureData), function(key) {
                 dataRows.push({
+                    key: key,
                     fileName: pureData[key].fileName,
                     success: pureData[key].success,
                     filamentUsage: (pureData[key].success == true) ? formatFilament({length: pureData[key].filamentLength, volume: pureData[key].filamentVolume}) : "-",

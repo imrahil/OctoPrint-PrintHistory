@@ -13,17 +13,21 @@
     <tr>
         <th style="width: 30%">Filename</th>
         <th style="width: 5%; text-align: center;"></th>
-        <th style="width: 25%">Date</th>
-        <th style="width: 15%">Print time</th>
-        <th style="width: 25%">Filament usage</th>
+        <th style="width: 22%">Date</th>
+        <th style="width: 15%;text-align: center;">Print time</th>
+        <th style="width: 23%;text-align: center;">Filament usage</th>
+        <th style="width: 4%"></th>
     </tr>
     <tbody data-bind="foreach: listHelper.paginatedItems">
         <tr>
             <td data-bind="text: fileName, attr: { title: fileName }"></td>
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}"></span></td>
             <td data-bind="text: formatDate(timestamp), attr: { title: formatTimeAgo(timestamp) }"></td>
-            <td data-bind="text: formatDuration(printTime)"></td>
-            <td data-bind="text: filamentUsage"></td>
+            <td style="text-align: center;" data-bind="text: formatDuration(printTime)"></td>
+            <td style="text-align: center;" data-bind="text: filamentUsage"></td>
+            <td>
+                <a href="#" class="icon-trash" data-bind="click: function() { if ($root.loginState.isUser()) { $parent.removeFile($data.key); } else { return; } }, css: {disabled: !$root.loginState.isUser()}"></a>
+            </td>
         </tr>
     </tbody>
 </table>

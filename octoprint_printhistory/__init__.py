@@ -117,7 +117,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
 
     @octoprint.plugin.BlueprintPlugin.route("/history", methods=["GET"])
-    def discovery(self):
+    def getHistoryData(self):
         import yaml
 
         self._logger.debug("Rendering history.yaml")
@@ -136,7 +136,30 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         else:
             return flask.make_response("No history file", 400)
 
+    @octoprint.plugin.BlueprintPlugin.route("/history/<int:identifier>", methods=["DELETE"])
+    def deleteHistoryData(self, identifier):
+        self._logger.debug("Delete file: %s" % identifier)
 
+        import yaml
+        from octoprint.server import NO_CONTENT
+
+        path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
+
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                try:
+                    history_dict = yaml.safe_load(f)
+
+                    if identifier in history_dict:
+                        self._logger.debug("Found a identifier: %s" % identifier)
+                        del history_dict[identifier]
+
+                        with open(path, "wb") as f2:
+                            yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
+                except:
+                    raise IOError("Couldn't read history data from {path}".format(path=path))
+
+        return NO_CONTENT
 
 
 __plugin_name__ = "Print History Plugin"
