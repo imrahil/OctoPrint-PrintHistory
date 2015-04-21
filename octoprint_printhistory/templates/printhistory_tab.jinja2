@@ -1,19 +1,23 @@
 <table class="table table-bordered table-hover">
     <tr>
-        <th style="width: 30%">Filename</th>
-        <th style="width: 10%; text-align: center;">Status</th>
-        <th style="width: 30%">Date &amp; print time</th>
-        <th style="width: 30%">Filament usage</th>
+        <th style="width: 35%">Filename</th>
+        <th style="width: 5%; text-align: center;"></th>
+        <th style="width: 20%">Date</th>
+        <th style="width: 15%">Print time</th>
+        <th style="width: 25%">Filament usage</th>
     </tr>
+    <tbody data-bind="foreach: rows">
+        <tr>
+            <td data-bind="text: fileName"></td>
+            <td data-bind="text: success" style="text-align: center;"></td>
+            <td data-bind="text: timestamp, attr: { title: formattedDate }"></td>
+            <td data-bind="text: printTime"></td>
+            <td data-bind="text: filamentUsage"></td>
+        </tr>
+    </tbody>
     <tr>
-        <td>Test.stl</td>
-        <td style="text-align: center;">OK</td>
-        <td>an hour ago / 01:46:16</td>
-        <td>3.24m / 20.10cm³</td>
-    </tr>
-    <tr>
-        <th colspan="2">Total:</td>
-        <th>04:46:16</td>
-        <th>123.24m / 220.10cm³</td>
+        <th colspan="3">Total:</td>
+        <th data-bind="text: totalTime"></td>
+        <th data-bind="text: totalUsage"></td>
     </tr>
 </table>

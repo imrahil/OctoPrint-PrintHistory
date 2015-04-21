@@ -20,29 +20,36 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                          octoprint.plugin.AssetPlugin):
 
     def on_after_startup(self):
-        self._logger.info("Hello World from Print History Plugin!")
         self._logger.info("Plugins folder: %s" % self._settings.getBaseFolder("plugins"))
+        self._logger.info("Uploads folder: %s" % self._settings.getBaseFolder("uploads"))
 
+     ##~~ TemplatePlugin API
     def get_template_configs(self):
         return [
             dict(type="tab", name="History")
         ]
 
-    #~~ EventPlugin API
+    ##~~ AssetPlugin API
+    def get_assets(self):
+        return {
+            "js": ["js/printhistory.js"]
+            # "css": ["css/navbartemp.css"],
+            # "less": ["less/navbartemp.less"]
+        }
 
+    #~~ EventPlugin API
     def on_event(self, event, payload):
 
         supported_event = None
 
-        # if event == octoprint.events.Events.PRINT_STARTED:
-        #     supported_event = octoprint.events.Events.PRINT_STARTED
-
+        # support for print done & cancelled events
         if event == octoprint.events.Events.PRINT_DONE:
             supported_event = octoprint.events.Events.PRINT_DONE
 
         elif event == octoprint.events.Events.PRINT_CANCELLED:
             supported_event = octoprint.events.Events.PRINT_CANCELLED
 
+        # unsupported event
         if supported_event is None:
             return
 
@@ -62,10 +69,10 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                 "fileName": fileName
             }
 
-            # analysis - we can find info about filament usage
+            # analysis - looking for info about filament usage
             if "analysis" in fileData:
                 if "filament" in fileData["analysis"] and "tool0" in fileData["analysis"]["filament"]:
-                    filamentVolume = fileData["analysis"]["filament"]["tool0"]["volume"]
+                    filamentVolume = fileData["analysis"]["filament"]["tool0"]["volume"]    # TODO - "tool0" means there is no dual extruder support
                     filamentLength = fileData["analysis"]["filament"]["tool0"]['length']
 
                     currentFile["filamentVolume"] = filamentVolume
@@ -76,10 +83,10 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             if "statistics" in fileData:
                 printer_profile = self._printer_profile_manager.get_current_or_default()["id"]
                 if "lastPrintTime" in fileData["statistics"] and printer_profile in fileData["statistics"]["lastPrintTime"]:
-                    lastPrintTime = fileData["statistics"]["lastPrintTime"][printer_profile]
+                    printTime = fileData["statistics"]["lastPrintTime"][printer_profile]
 
-                    currentFile["lastPrintTime"] = lastPrintTime
-                    self._logger.info("lastPrintTime: %s" % lastPrintTime)
+                    currentFile["printTime"] = printTime
+                    self._logger.info("printTime: %s" % printTime)
 
             # when print happened and what was result
             if "history" in fileData:
