@@ -152,7 +152,8 @@ $(function() {
                     }
                 },
                 yaxis: {
-                    tickDecimals: 0
+                    tickDecimals: 0,
+                    min: 0
                 },
                 xaxis: {
                     mode: "time",
