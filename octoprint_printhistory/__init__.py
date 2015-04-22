@@ -32,9 +32,8 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     ##~~ AssetPlugin API
     def get_assets(self):
         return {
-            "js": ["js/printhistory.js"]
-            # "css": ["css/navbartemp.css"],
-            # "less": ["less/navbartemp.less"]
+            "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js"],
+            "css": ["css/printhistory.css"]
         }
 
     #~~ EventPlugin API
@@ -160,6 +159,27 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                     raise IOError("Couldn't read history data from {path}".format(path=path))
 
         return NO_CONTENT
+
+    @octoprint.plugin.BlueprintPlugin.route("/export/<string:exportType>", methods=["GET"])
+    def exportHistoryData(self, exportType):
+        import yaml
+        import csv
+
+        self._logger.debug("Exporting history.yaml to %s" % exportType)
+        path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
+
+        history_dict = {}
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                try:
+                    history_dict = yaml.safe_load(f)
+                except:
+                    raise IOError("Couldn't read history data from {path}".format(path=path))
+
+            if history_dict is not None:
+                return jsonify(history=history_dict)
+        else:
+            return flask.make_response("No history file", 400)
 
 
 __plugin_name__ = "Print History Plugin"

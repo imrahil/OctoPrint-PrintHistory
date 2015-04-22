@@ -11,17 +11,20 @@
 
 <table class="table table-striped table-hover table-condensed table-hover" style="clear: both;">
     <tr>
-        <th style="width: 30%">Filename</th>
+        <th style="width: 38%">Filename</th>
         <th style="width: 5%; text-align: center;"></th>
         <th style="width: 22%">Date</th>
         <th style="width: 15%;text-align: center;">Print time</th>
-        <th style="width: 23%;text-align: center;">Filament usage</th>
+        <th style="width: 15%;text-align: center;">Filament usage</th>
         <th style="width: 4%"></th>
     </tr>
     <tbody data-bind="foreach: listHelper.paginatedItems">
         <tr>
-            <td data-bind="text: fileName, attr: { title: fileName }"></td>
-            <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}"></span></td>
+            <td>
+                <span data-bind="text: fileName, attr: { title: fileName }"></span>
+                <a href="#" class="icon-pencil" data-bind="click: function() { if ($root.loginState.isUser()) { $parent.editAnnotation($data.key); } else { return; } }, css: {disabled: !$root.loginState.isUser()}"></a>
+            </td>
+            <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>
             <td data-bind="text: formatDate(timestamp), attr: { title: formatTimeAgo(timestamp) }"></td>
             <td style="text-align: center;" data-bind="text: formatDuration(printTime)"></td>
             <td style="text-align: center;" data-bind="text: filamentUsage"></td>
@@ -57,4 +60,25 @@
         <th style="width: 25%" data-bind="text: totalUsage"></td>
     </tr>
 </table>
+
+<div>
+    <h1 style="margin-bottom: 0;">Prints per day</h1>
+    <small id="printhistory-graphRange"><a href="#" data-bind="click: function() { $root.changeGraphRange('month'); }">last month</a> | <a href="#" data-bind="click: function() { $root.changeGraphRange('week'); }">last week</a></small>
+    <div id="printhistory-lastmonth-graph"></div>
+</div>
+
+<div style="float: left; width: 45%; margin-right: 20px;">
+    <h1>Success rate</h1>
+    <div id="printhistory-success-graph"></div>
+</div>
+
+<div style="float: left; width: 50%">
+    <h1>Export as</h1>
+    <a href="#" data-bind="attr: {href: $root.export('csv')}">CSV</a>
+<!--
+    <a href="#" data-bind="click: function() { $root.export('excel'); }, enable: false">Excel</a> |
+    <a href="#" data-bind="click: function() { $root.export('pdf'); }, enable: false">PDF</a>
+-->
+</div>
+<div style="clear: both;"></div>
 
