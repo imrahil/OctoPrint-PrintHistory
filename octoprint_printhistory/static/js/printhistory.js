@@ -41,7 +41,7 @@ $(function() {
             "timestamp",
             [],
             ["successful"],
-            15
+            10
         );
 
         self.fromCurrentData = function (data) {
@@ -104,8 +104,9 @@ $(function() {
             self.updatePlots();
         };
 
+        // TODO - enable after working server side
         self.export = function(type) {
-            return "plugin/printhistory/export/" + type;
+            return "#"; //"plugin/printhistory/export/" + type;
         };
 
         self.onBeforeBinding = function () {
@@ -113,7 +114,7 @@ $(function() {
         };
 
         self.editAnnotation = function (key) {
-
+            // TODO - add some additional info about each print
         };
 
         self.changeGraphRange = function (range) {
@@ -127,7 +128,7 @@ $(function() {
         };
 
 
-        function labelFormatter(label, series) {
+        function printhistoryLabelFormatter(label, series) {
             return "<div style='font-size:8pt; text-align:center; padding:2px; color: #666666;'>" + label + "<br/>" + Math.round(series.percent) + "%</div>";
         }
 
@@ -173,7 +174,7 @@ $(function() {
                         label: {
                             show: true,
                             radius: 1/2,
-                            formatter: labelFormatter,
+                            formatter: printhistoryLabelFormatter,
                             background: {
                                 opacity: 0.5
                             }
@@ -189,6 +190,7 @@ $(function() {
                 successCount += (self.pureData[key].success == true) ? 1 : 0;
                 failureCount += (self.pureData[key].success != true) ? 1 : 0;
 
+                // TODO - successful/failure as different series and use stacked bar chart
                 var day = moment.unix(self.pureData[key].timestamp).format('YYYY-MM-DD');
                 if (!agreggateData.hasOwnProperty(day)) {
                     agreggateData[day] = 0;
@@ -202,7 +204,7 @@ $(function() {
             });
 
             var success_data = [
-                { label: "Success", color: '#00FF00', data: successCount},
+                { label: "Success", color: '#31C448', data: successCount},
                 { label: "Failure", color: '#FF0000', data: failureCount}
             ];
 
