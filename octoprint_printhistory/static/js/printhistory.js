@@ -55,7 +55,7 @@ $(function() {
         };
 
         self.removeFile = function(key) {
-            console.log('PrintHistory - remove file: ' + key);
+            //console.log('PrintHistory - remove file: ' + key);
 
             $.ajax({
                 url: "plugin/printhistory/history/" + key,
@@ -66,7 +66,7 @@ $(function() {
         };
 
         self.requestData = function() {
-            console.log('PrintHistory - request data');
+            //console.log('PrintHistory - request data');
 
             $.ajax({
                 url: "plugin/printhistory/history",
@@ -77,7 +77,7 @@ $(function() {
         };
 
         self.fromResponse = function(data) {
-            console.log('Callback - data: ' + data);
+            //console.log('Callback - data: ' + data);
 
             var dataRows = [];
             self.pureData = data.history;
@@ -118,7 +118,7 @@ $(function() {
             }
         };
 
-        self.onBeforeBinding = function () {
+        self.onStartupComplete = function () {
             self.requestData();
         };
 
@@ -145,18 +145,14 @@ $(function() {
             var lastmonth_graph = $("#printhistory-lastmonth-graph");
             var success_graph = $("#printhistory-success-graph");
 
-            var successCount = 0;
-            var failureCount = 0;
-            var lastmonth_data = [];
-            var agreggateData = {};
-
             var lastmonthGraphOptions = {
                 series: {
+                    stack: 0,
                     bars: {
                         show: true,
                         barWidth: 1000*60*60*24*0.6,
                         lineWidth: 0,
-                        fillColor: '#31C448',
+                        fill: 1,
                         align: "center"
                     }
                 },
@@ -196,29 +192,54 @@ $(function() {
                 }
             };
 
+            var successCount = 0;
+            var failureCount = 0;
+
+            var agreggateSuccess = {};
+            var agreggateFailure = {};
+
             _.each(_.keys(self.pureData), function(key) {
-                successCount += (self.pureData[key].success == true) ? 1 : 0;
-                failureCount += (self.pureData[key].success != true) ? 1 : 0;
+                var day = moment.unix(self.pureData[key].timestamp).hour(0).minute(0).second(0).millisecond(0).valueOf();
 
-                // TODO - successful/failure as different series and use stacked bar chart
-                var day = moment.unix(self.pureData[key].timestamp).format('YYYY-MM-DD');
-                if (!agreggateData.hasOwnProperty(day)) {
-                    agreggateData[day] = 0;
+                if (self.pureData[key].success == true) {
+                    successCount += 1;
+
+                    if (!agreggateSuccess.hasOwnProperty(day)) {
+                        agreggateSuccess[day] = 0;
+                    }
+                    agreggateSuccess[day] += 1;
+                } else {
+                    failureCount += 1;
+
+                    if (!agreggateFailure.hasOwnProperty(day)) {
+                        agreggateFailure[day] = 0;
+                    }
+                    agreggateFailure[day] += 1;
                 }
-                agreggateData[day] += 1;
             });
 
-            _.each(_.keys(agreggateData), function(key) {
-                var day = moment(key).valueOf();
-                lastmonth_data.push([day, agreggateData[key]]);
+            var successArr = [];
+            var failureArr = [];
+
+            _.each(_.keys(agreggateSuccess), function(key) {
+                successArr.push([key, agreggateSuccess[key]]);
             });
+
+            _.each(_.keys(agreggateFailure), function(key) {
+                failureArr.push([key, agreggateFailure[key]]);
+            });
+
+            var lastmonth_data = [
+                { label: "Success", color: '#31C448', data: successArr},
+                { label: "Failure", color: '#FF0000', data: failureArr}
+            ];
 
             var success_data = [
                 { label: "Success", color: '#31C448', data: successCount},
                 { label: "Failure", color: '#FF0000', data: failureCount}
             ];
 
-            $.plot(lastmonth_graph, [lastmonth_data], lastmonthGraphOptions);
+            $.plot(lastmonth_graph, lastmonth_data, lastmonthGraphOptions);
             $.plot(success_graph, success_data, successGraphOptions);
         };
 

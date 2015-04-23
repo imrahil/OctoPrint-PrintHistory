@@ -32,7 +32,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     ##~~ AssetPlugin API
     def get_assets(self):
         return {
-            "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js"],
+            "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js", "js/jquery.flot.stack.js"],
             "css": ["css/printhistory.css"]
         }
 
