@@ -131,9 +131,14 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                     raise IOError("Couldn't read history data from {path}".format(path=path))
 
             if history_dict is not None:
+                self._logger.debug("Returning data")
                 return jsonify(history=history_dict)
+            else:
+                self._logger.debug("Empty file history.yaml")
+                return jsonify({})
         else:
-            return flask.make_response("No history file", 400)
+            self._logger.debug("File doesn't exist")
+            return jsonify({})
 
     @octoprint.plugin.BlueprintPlugin.route("/history/<int:identifier>", methods=["DELETE"])
     def deleteHistoryData(self, identifier):
@@ -153,8 +158,11 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                         self._logger.debug("Found a identifier: %s" % identifier)
                         del history_dict[identifier]
 
-                        with open(path, "wb") as f2:
-                            yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
+                        if len(history_dict) == 0:
+                            open(path, "w")
+                        else:
+                            with open(path, "w") as f2:
+                                yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
                 except:
                     raise IOError("Couldn't read history data from {path}".format(path=path))
 
@@ -164,6 +172,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def exportHistoryData(self, exportType):
         import yaml
         import csv
+        import StringIO
 
         self._logger.debug("Exporting history.yaml to %s" % exportType)
         path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
@@ -177,7 +186,22 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                     raise IOError("Couldn't read history data from {path}".format(path=path))
 
             if history_dict is not None:
-                return jsonify(history=history_dict)
+
+                si = StringIO.StringIO()
+                writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+                writer.writerow(['fileName', 'timestamp', 'success', 'printTime', 'filamentLength', 'filamentVolume'])
+
+                for historyHash in history_dict.keys():
+                    historyDetails = history_dict[historyHash]
+                    writer.writerow([ historyDetails["fileName"], historyDetails["timestamp"], historyDetails["success"], historyDetails["printTime"], historyDetails["filamentLength"], historyDetails["filamentVolume"], ]);
+
+                response = flask.make_response(si.getvalue())
+                response.headers["Content-type"] = "text/csv"
+                response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.csv"
+
+                return response
+            else:
+                return flask.make_response("No history file", 400)
         else:
             return flask.make_response("No history file", 400)
 

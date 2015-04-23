@@ -55,6 +55,8 @@ $(function() {
         };
 
         self.removeFile = function(key) {
+            console.log('PrintHistory - remove file: ' + key);
+
             $.ajax({
                 url: "plugin/printhistory/history/" + key,
                 type: "DELETE",
@@ -64,6 +66,8 @@ $(function() {
         };
 
         self.requestData = function() {
+            console.log('PrintHistory - request data');
+
             $.ajax({
                 url: "plugin/printhistory/history",
                 type: "GET",
@@ -73,6 +77,8 @@ $(function() {
         };
 
         self.fromResponse = function(data) {
+            console.log('Callback - data: ' + data);
+
             var dataRows = [];
             self.pureData = data.history;
             var totalTime = 0;
@@ -104,9 +110,12 @@ $(function() {
             self.updatePlots();
         };
 
-        // TODO - enable after working server side
         self.export = function(type) {
-            return "#"; //"plugin/printhistory/export/" + type;
+            if (self.listHelper.items().length > 0) {
+                return "plugin/printhistory/export/" + type + "?apikey=" + UI_API_KEY;
+            } else {
+                return false;
+            }
         };
 
         self.onBeforeBinding = function () {

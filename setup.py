@@ -6,7 +6,7 @@ import setuptools
 plugin_identifier = "printhistory"
 plugin_package = "octoprint_%s" % plugin_identifier
 plugin_name = "OctoPrint-PrintHistory"
-plugin_version = "0.1"
+plugin_version = "0.2"
 plugin_description = "Saves filename, print time and filament usage for each print"
 plugin_author = "Jarek Szczepanski"
 plugin_author_email = "imrahil@imrahil.com"
