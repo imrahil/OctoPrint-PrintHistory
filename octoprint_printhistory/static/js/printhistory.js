@@ -94,7 +94,8 @@ $(function() {
                     success: self.pureData[key].success,
                     filamentUsage: (self.pureData[key].success == true) ? formatFilament({length: self.pureData[key].filamentLength, volume: self.pureData[key].filamentVolume}) : "-",
                     timestamp: self.pureData[key].timestamp,
-                    printTime: self.pureData[key].printTime
+                    printTime: self.pureData[key].printTime,
+                    note: self.pureData[key].hasOwnProperty('note') ? self.pureData[key].note : ""
                 });
 
                 totalTime += self.pureData[key].printTime;

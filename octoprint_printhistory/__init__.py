@@ -32,8 +32,8 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     ##~~ AssetPlugin API
     def get_assets(self):
         return {
-            "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js", "js/jquery.flot.stack.js"],
-            "css": ["css/printhistory.css"]
+            "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js", "js/jquery.flot.stack.js", "js/bootstrap-editable.min.js", "js/knockout.x-editable.min.js"],
+            "css": ["css/printhistory.css", "css/bootstrap-editable.css"]
         }
 
     #~~ EventPlugin API
@@ -65,7 +65,8 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
             self._logger.info("metadata for %s" % fileName)
             currentFile = {
-                "fileName": fileName
+                "fileName": fileName,
+                "note": ""
             }
 
             # analysis - looking for info about filament usage
@@ -163,6 +164,32 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                         else:
                             with open(path, "w") as f2:
                                 yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
+                except:
+                    raise IOError("Couldn't read history data from {path}".format(path=path))
+
+        return NO_CONTENT
+
+    @octoprint.plugin.BlueprintPlugin.route("/savenote", methods=["POST"])
+    def saveNote(self):
+        identifier = int(flask.request.values["pk"])
+        self._logger.debug("Saving note: %s" % identifier)
+
+        import yaml
+        from octoprint.server import NO_CONTENT
+
+        path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
+
+        if os.path.exists(path):
+            with open(path, "r") as f:
+                try:
+                    history_dict = yaml.safe_load(f)
+
+                    if identifier in history_dict:
+                        self._logger.debug("Found a identifier: %s" % identifier)
+                        history_dict[identifier]["note"] = flask.request.values["value"]
+
+                        with open(path, "w") as f2:
+                            yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
                 except:
                     raise IOError("Couldn't read history data from {path}".format(path=path))
 
