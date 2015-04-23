@@ -15,7 +15,7 @@
         <th style="width: 5%; text-align: center;"></th>
         <th style="width: 22%">Date</th>
         <th style="width: 15%;text-align: center;">Print time</th>
-        <th style="width: 15%;text-align: center;">Filament usage</th>
+        <th style="width: 16%;text-align: center;">Filament usage</th>
         <th style="width: 4%"></th>
     </tr>
     <tbody data-bind="foreach: listHelper.paginatedItems">
@@ -55,9 +55,10 @@
 
 <table class="table table-striped table-hover table-condensed table-hover">
     <tr>
-        <th style="width: 60%">Total:</td>
-        <th style="width: 15%" data-bind="text: totalTime"></td>
-        <th style="width: 25%" data-bind="text: totalUsage"></td>
+        <th style="width: 67%">Total:</td>
+        <th style="width: 13%; text-align: center;" data-bind="text: totalTime"></td>
+        <th style="width: 16%; text-align: center;" data-bind="text: totalUsage"></td>
+        <th style="width: 4%;"></td>
     </tr>
 </table>
 
@@ -74,10 +75,10 @@
 
 <div style="float: left; width: 50%">
     <h1>Export as</h1>
-    <a href="#" data-bind="attr: {href: $root.export('csv'), css: {disabled: !$root.export('csv')}}">CSV</a>
+    <a href="#" data-bind="attr: {href: $root.export('csv'), css: {disabled: !$root.export('csv')}}">CSV</a> |
+    <a href="#" data-bind="attr: {href: $root.export('excel'), css: {disabled: !$root.export('excel')}}">Excel</a>
 <!--
-    <a href="#" data-bind="attr: {href: $root.export('excel'), css: {disabled: !$root.export('excel')}}">CSV</a>
-    <a href="#" data-bind="attr: {href: $root.export('pdf'), css: {disabled: !$root.export('pdf')}}">CSV</a>
+    <a href="#" data-bind="attr: {href: $root.export('pdf'), css: {disabled: !$root.export('pdf')}}">PDF</a>
 -->
 </div>
 <div style="clear: both;"></div>

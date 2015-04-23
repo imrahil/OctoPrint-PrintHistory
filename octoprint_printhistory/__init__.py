@@ -186,18 +186,47 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                     raise IOError("Couldn't read history data from {path}".format(path=path))
 
             if history_dict is not None:
-
                 si = StringIO.StringIO()
-                writer = csv.writer(si, quoting=csv.QUOTE_ALL)
-                writer.writerow(['fileName', 'timestamp', 'success', 'printTime', 'filamentLength', 'filamentVolume'])
 
-                for historyHash in history_dict.keys():
-                    historyDetails = history_dict[historyHash]
-                    writer.writerow([ historyDetails["fileName"], historyDetails["timestamp"], historyDetails["success"], historyDetails["printTime"], historyDetails["filamentLength"], historyDetails["filamentVolume"], ]);
+                headers = ['File name', 'Timestamp', 'Success', 'Print time', 'Filament length', 'Filament volume']
+                if exportType == 'csv':
+                    writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+                    writer.writerow(headers)
 
-                response = flask.make_response(si.getvalue())
-                response.headers["Content-type"] = "text/csv"
-                response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.csv"
+                    for historyHash in history_dict.keys():
+                        historyDetails = history_dict[historyHash]
+                        writer.writerow([ historyDetails["fileName"], historyDetails["timestamp"], historyDetails["success"], historyDetails["printTime"], historyDetails["filamentLength"], historyDetails["filamentVolume"], ]);
+
+                    response = flask.make_response(si.getvalue())
+                    response.headers["Content-type"] = "text/csv"
+                    response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.csv"
+                elif exportType == 'excel':
+                    import xlsxwriter
+
+                    workbook = xlsxwriter.Workbook(si)
+                    worksheet = workbook.add_worksheet()
+                    col = 0
+                    for header in headers:
+                        worksheet.write(0, col, header)
+                        col += 1
+
+                    row = 1
+                    for historyHash in history_dict.keys():
+                        historyDetails = history_dict[historyHash]
+                        worksheet.write(row, 0, historyDetails["fileName"])
+                        worksheet.write(row, 1, historyDetails["timestamp"])
+                        worksheet.write(row, 2, historyDetails["success"])
+                        worksheet.write(row, 3, historyDetails["printTime"])
+                        worksheet.write(row, 4, historyDetails["filamentLength"])
+                        worksheet.write(row, 5, historyDetails["filamentVolume"])
+
+                        row += 1
+
+                    workbook.close()
+
+                    response = flask.make_response(si.getvalue())
+                    response.headers["Content-type"] = "application/vnd.ms-excel"
+                    response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.xls"
 
                 return response
             else:
