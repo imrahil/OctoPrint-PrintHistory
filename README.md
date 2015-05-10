@@ -34,9 +34,10 @@ won't be able to satisfy its dependencies.
     git pull & git checkout devel
     python setup.py clean
     python setup.py install
-    sudo service octoprint restart
     ```
-4. run 
+4. run
+
     ```
     pip install https://github.com/imrahil/OctoPrint-PrintHistory/archive/master.zip
+    sudo service octoprint restart
     ```
