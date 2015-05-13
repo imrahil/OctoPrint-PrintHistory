@@ -8,14 +8,16 @@ def eventHandler(self, event, payload):
     import octoprint.events
     import os
 
+    from operator import itemgetter
+
     supported_event = None
 
     # support for print done & cancelled events
     if event == octoprint.events.Events.PRINT_DONE:
-        supported_event = octoprint.events.Events.PRINT_DONE
+        supported_event = event
 
     elif event == octoprint.events.Events.PRINT_CANCELLED:
-        supported_event = octoprint.events.Events.PRINT_CANCELLED
+        supported_event = event
 
     # unsupported event
     if supported_event is None:
@@ -24,7 +26,7 @@ def eventHandler(self, event, payload):
     self._logger.info("event: %s" % supported_event)
     try:
         fileData = self._file_manager.get_metadata(payload["origin"], payload["file"])
-        path, fileName = self._file_manager.sanitize(payload["origin"], payload["file"])
+        fileName = payload["filename"]
     except:
         fileData = None
 
@@ -60,12 +62,12 @@ def eventHandler(self, event, payload):
         # when print happened and what was result
         if "history" in fileData:
             history = fileData["history"]
-            last = None
 
-            for entry in history:
-                if not last or ("timestamp" in entry and "timestamp" in last and entry["timestamp"] > last["timestamp"]):
-                    last = entry
-            if last:
+            newlist = sorted(history, key=itemgetter('timestamp'), reverse=True)
+
+            if newlist:
+                last = newlist[0]
+
                 success = last["success"]
                 timestamp = last["timestamp"]
 
