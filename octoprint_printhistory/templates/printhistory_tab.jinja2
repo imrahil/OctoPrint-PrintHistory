@@ -22,7 +22,7 @@
         <tr>
             <td>
                 <span data-bind="text: fileName, attr: { title: fileName }"></span>
-                <a href="#" class="icon-pencil" data-bind="editable: note, editableOptions: {display: false, pk: key, url: 'plugin/printhistory/savenote', success: $parent.requestData, error: function(){alert('grr')}}" title="Add/edit note"></a>
+                <a href="#" class="icon-pencil" data-bind="editable: note, editableOptions: {display: false, pk: key, url: 'plugin/printhistory/savenote', success: $parent.requestData, error: function(){alert('grr')}}, visible: $root.loginState.isUser()" title="Add/edit note"></a>
                 <div class="printhistory-note"><small data-bind="text: note"></small></div>
             </td>
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>
@@ -30,7 +30,7 @@
             <td style="text-align: center;" data-bind="text: formatDuration(printTime)"></td>
             <td style="text-align: center;" data-bind="text: filamentUsage"></td>
             <td>
-                <a href="#" class="icon-trash" data-bind="click: function() { if ($root.loginState.isUser()) { $parent.removeFile($data.key); } else { return; } }, css: {disabled: !$root.loginState.isUser()}"></a>
+                <a href="#" class="icon-trash" data-bind="click: function() { if ($root.loginState.isUser()) { $parent.removeFile($data.key); } else { return; } }, visible: $root.loginState.isUser()"></a>
             </td>
         </tr>
     </tbody>
