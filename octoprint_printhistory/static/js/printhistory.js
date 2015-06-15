@@ -130,8 +130,10 @@ $(function() {
         self.changeGraphRange = function (range) {
             if (range == 'week') {
                 self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'weeks').valueOf());
-            } else {
+            } else if (range == 'month'){
                 self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'months').valueOf());
+            } else {
+                self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'quarter').valueOf());
             }
 
             self.updatePlots();

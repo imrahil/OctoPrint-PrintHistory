@@ -65,7 +65,11 @@
 
 <div>
     <h1 style="margin-bottom: 0;">Prints per day</h1>
-    <small id="printhistory-graphRange"><a href="#" data-bind="click: function() { $root.changeGraphRange('month'); }">last month</a> | <a href="#" data-bind="click: function() { $root.changeGraphRange('week'); }">last week</a></small>
+    <small id="printhistory-graphRange">
+        <a href="#" data-bind="click: function() { $root.changeGraphRange('week'); }">last week</a> |
+        <a href="#" data-bind="click: function() { $root.changeGraphRange('month'); }">last month</a> |
+        <a href="#" data-bind="click: function() { $root.changeGraphRange('quarter'); }">last quarter</a>
+    </small>
     <div id="printhistory-lastmonth-graph"></div>
 </div>
 
