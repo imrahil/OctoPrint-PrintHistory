@@ -77,9 +77,8 @@ def eventHandler(self, event, payload):
 
         rounded_timestamp = int(timestamp * 1000);
         data[rounded_timestamp] = currentFile
-        path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
 
-        with open(path, "a") as f:
+        with open(self._history_file_path, "a") as f:
             try:
                 import yaml
                 yaml.safe_dump(data, f, default_flow_style=False, indent="  ", allow_unicode=True)

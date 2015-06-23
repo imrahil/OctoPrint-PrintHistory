@@ -12,15 +12,14 @@ def exportHistoryData(self, exportType):
     import StringIO
 
     self._logger.debug("Exporting history.yaml to %s" % exportType)
-    path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
 
     history_dict = {}
-    if os.path.exists(path):
-        with open(path, "r") as f:
+    if os.path.exists(self._history_file_path):
+        with open(self._history_file_path, "r") as f:
             try:
                 history_dict = yaml.safe_load(f)
             except:
-                raise IOError("Couldn't read history data from {path}".format(path=path))
+                raise IOError("Couldn't read history data from {path}".format(path=self._history_file_path))
 
         if history_dict is not None:
             si = StringIO.StringIO()
