@@ -26,7 +26,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         self._logger.debug("Uploads folder: %s" % self._settings.getBaseFolder("uploads"))
 
         old_path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
-        self._history_file_path = os.path.join(self._settings.get_plugin_data_folder(), "history.yaml")
+        self._history_file_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
         if os.path.exists(old_path):
             os.rename(old_path, self._history_file_path)
 
