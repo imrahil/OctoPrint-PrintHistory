@@ -32,12 +32,12 @@ def exportHistoryData(self, exportType):
                 for historyHash in history_dict.keys():
                     historyDetails = history_dict[historyHash]
                     output = list()
-                    output.append(historyDetails["fileName"] if historyDetails["fileName"] else "-")
-                    output.append(historyDetails["timestamp"] if historyDetails["timestamp"] else "-")
-                    output.append(historyDetails["success"])
-                    output.append(historyDetails["printTime"] if historyDetails["printTime"] else "-")
-                    output.append(historyDetails["filamentLength"] if historyDetails["filamentLength"] else "-")
-                    output.append(historyDetails["filamentVolume"] if historyDetails["filamentVolume"] else "-")
+                    output.append(historyDetails["fileName"] if "fileName" in historyDetails and historyDetails["fileName"] is not None else "-")
+                    output.append(historyDetails["timestamp"] if "timestamp" in historyDetails and historyDetails["timestamp"] is not None else "-")
+                    output.append(historyDetails["success"] if "success" in historyDetails and historyDetails["success"] is not None else "-")
+                    output.append(historyDetails["printTime"] if "printTime" in historyDetails and historyDetails["printTime"] is not None else "-")
+                    output.append(historyDetails["filamentLength"] if "filamentLength" in historyDetails and historyDetails["filamentLength"] is not None else "-")
+                    output.append(historyDetails["filamentVolume"] if "filamentVolume" in historyDetails and historyDetails["filamentVolume"] is not None else "-")
 
                     writer.writerow(output);
 
@@ -57,12 +57,12 @@ def exportHistoryData(self, exportType):
                 row = 1
                 for historyHash in history_dict.keys():
                     historyDetails = history_dict[historyHash]
-                    worksheet.write(row, 0, (historyDetails["fileName"] if historyDetails["fileName"] else "-"))
-                    worksheet.write(row, 1, (historyDetails["timestamp"] if historyDetails["timestamp"] else "-"))
-                    worksheet.write(row, 2, historyDetails["success"])
-                    worksheet.write(row, 3, (historyDetails["printTime"] if historyDetails["printTime"] else "-"))
-                    worksheet.write(row, 4, (historyDetails["filamentLength"] if historyDetails["filamentLength"] else "-"))
-                    worksheet.write(row, 5, (historyDetails["filamentVolume"] if historyDetails["filamentVolume"] else "-"))
+                    worksheet.write(row, 0, (historyDetails["fileName"] if "fileName" in historyDetails and historyDetails["fileName"] is not None else "-"))
+                    worksheet.write(row, 1, (historyDetails["timestamp"] if "timestamp" in historyDetails and historyDetails["timestamp"] is not None else "-"))
+                    worksheet.write(row, 2, (historyDetails["success"] if "success" in historyDetails and historyDetails["success"] is not None else "-"))
+                    worksheet.write(row, 3, (historyDetails["printTime"] if "printTime" in historyDetails and historyDetails["printTime"] is not None else "-"))
+                    worksheet.write(row, 4, (historyDetails["filamentLength"] if "filamentLength" in historyDetails and historyDetails["filamentLength"] is not None else "-"))
+                    worksheet.write(row, 5, (historyDetails["filamentVolume"] if "filamentVolume" in historyDetails and historyDetails["filamentVolume"] is not None else "-"))
 
                     row += 1
 
