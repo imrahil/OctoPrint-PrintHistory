@@ -1,11 +1,14 @@
 <div class="pull-right">
     <small>
-        {{ _('Sort by') }}: <a href="#" data-bind="click: function() { listHelper.changeSorting('fileName'); }">{{ _('Name') }} ({{ _('ascending') }})</a> | <a href="#" data-bind="click: function() { listHelper.changeSorting('timestamp'); }">{{ _('Date') }} ({{ _('descending') }})</a> | <a href="#" data-bind="click: function() { listHelper.changeSorting('printTime'); }">{{ _('Print time') }} ({{ _('descending') }})</a>
+        {{ _('Sort by') }}:
+        <a href="#" data-bind="click: fileNameSort">{{ _('Name') }} <span data-bind="text: sortOrder('fileName')"></span></a> |
+        <a href="#" data-bind="click: timeStampSort">{{ _('Date') }} <span data-bind="text: sortOrder('timestamp')"></span></a> |
+        <a href="#" data-bind="click: printTimeSort">{{ _('Print time') }} <span data-bind="text: sortOrder('printTime')"></span></a>
     </small>
 </div>
 <div class="pull-right" style="clear: both;">
     <small>
-        Show: <a href="#" data-bind="click: function() { $root.listHelper.toggleFilter('successful'); }"><i class="icon-ok" data-bind="style: {visibility: _.contains(listHelper.currentFilters(), 'successful') ? 'visible' : 'hidden'}"></i> only successful prints</a></li>
+        Show: <a href="#" data-bind="click: listHelper.toggleFilter.bind($data, 'successful')"><i class="icon-ok" data-bind="style: {visibility: _.contains(listHelper.currentFilters(), 'successful') ? 'visible' : 'hidden'}"></i> only successful prints</a></li>
     </small>
 </div>
 
@@ -22,7 +25,7 @@
         <tr>
             <td>
                 <span data-bind="text: fileName, attr: { title: fileName }"></span>
-                <a href="#" class="icon-pencil" data-bind="editable: note, editableOptions: {display: false, pk: key, url: 'plugin/printhistory/savenote', success: $parent.requestData, error: function(){alert('grr')}}, visible: $root.loginState.isUser()" title="Add/edit note"></a>
+                <a href="#" class="icon-pencil" data-bind="editable: note, editableOptions: {display: false, pk: key, url: 'plugin/printhistory/savenote', success: $root.requestData, error: function(){alert('grr')}}, visible: $root.loginState.isUser() && !$root.isPrinting()" title="Add/edit note"></a>
                 <div class="printhistory-note"><small data-bind="text: note"></small></div>
             </td>
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>
@@ -30,7 +33,7 @@
             <td style="text-align: center;" data-bind="text: formatDuration(printTime)"></td>
             <td style="text-align: center;" data-bind="text: filamentUsage"></td>
             <td>
-                <a href="#" class="icon-trash" data-bind="click: function() { if ($root.loginState.isUser()) { $parent.removeFile($data.key); } else { return; } }, visible: $root.loginState.isUser()"></a>
+                <a href="#" class="icon-trash" data-bind="click: function() { if ($root.loginState.isUser() && !$root.isPrinting()) { $root.removeFile($data.key); } else { return; } }, visible: $root.loginState.isUser() && !$root.isPrinting()"></a>
             </td>
         </tr>
     </tbody>
@@ -44,7 +47,7 @@
     </ul>
     <ul data-bind="foreach: listHelper.pages">
         <li data-bind="css: { active: $data.number === $root.listHelper.currentPage(), disabled: $data.number === -1 }">
-            <a href="#" data-bind="text: $data.text, click: function() { $root.listHelper.changePage($data.number); }"></a>
+            <a href="#" data-bind="text: $data.text, click: $root.listHelper.changePage.bind($data, $data.number)"></a>
         </li>
     </ul>
     <ul>
@@ -66,9 +69,9 @@
 <div>
     <h1 style="margin-bottom: 0;">Prints per day</h1>
     <small id="printhistory-graphRange">
-        <a href="#" data-bind="click: function() { $root.changeGraphRange('week'); }">last week</a> |
-        <a href="#" data-bind="click: function() { $root.changeGraphRange('month'); }">last month</a> |
-        <a href="#" data-bind="click: function() { $root.changeGraphRange('quarter'); }">last quarter</a>
+        <a href="#" data-bind="click: changeGraphRange.bind($data, 'week')">last week</a> |
+        <a href="#" data-bind="click: changeGraphRange.bind($data, 'month')">last month</a> |
+        <a href="#" data-bind="click: changeGraphRange.bind($data, 'quarter')">last quarter</a>
     </small>
     <div id="printhistory-lastmonth-graph"></div>
 </div>

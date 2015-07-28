@@ -14,20 +14,44 @@ $(function() {
         self.listHelper = new ItemListHelper(
             "historyItems",
             {
-                "fileName": function(a, b) {
+                "fileNameAsc": function (a, b) {
                     // sorts ascending
                     if (a["fileName"].toLocaleLowerCase() < b["fileName"].toLocaleLowerCase()) return -1;
                     if (a["fileName"].toLocaleLowerCase() > b["fileName"].toLocaleLowerCase()) return 1;
                     return 0;
                 },
-                "timestamp": function(a, b) {
+                "fileNameDesc": function (a, b) {
+                    // sorts ascending
+                    if (a["fileName"].toLocaleLowerCase() < b["fileName"].toLocaleLowerCase()) return 1;
+                    if (a["fileName"].toLocaleLowerCase() > b["fileName"].toLocaleLowerCase()) return -1;
+                    return 0;
+                },
+                "timestampAsc": function(a, b) {
+                    // sorts descending
+                    if (a["timestamp"] > b["timestamp"]) return 1;
+                    if (a["timestamp"] < b["timestamp"]) return -1;
+                    return 0;
+                },
+                "timestampDesc": function(a, b) {
                     // sorts descending
                     if (a["timestamp"] > b["timestamp"]) return -1;
                     if (a["timestamp"] < b["timestamp"]) return 1;
                     return 0;
                 },
-                "printTime": function(a, b) {
+                "printTimeAsc": function(a, b) {
                     // sorts descending
+                    if (typeof (a["printTime"]) === 'undefined') return 1;
+                    if (typeof (b["printTime"]) === 'undefined') return 0;
+
+                    if (a["printTime"] > b["printTime"]) return 1;
+                    if (a["printTime"] < b["printTime"]) return -1;
+                    return 0;
+                },
+                "printTimeDesc": function(a, b) {
+                    // sorts descending
+                    if (typeof (a["printTime"]) === 'undefined') return 1;
+                    if (typeof (b["printTime"]) === 'undefined') return 0;
+
                     if (a["printTime"] > b["printTime"]) return -1;
                     if (a["printTime"] < b["printTime"]) return 1;
                     return 0;
@@ -43,6 +67,44 @@ $(function() {
             ["successful"],
             10
         );
+
+        self.fileNameSort = function() {
+            if (self.listHelper.currentSorting() == "fileNameAsc") {
+                self.listHelper.changeSorting("fileNameDesc");
+            } else {
+                self.listHelper.changeSorting("fileNameAsc");
+            }
+        };
+
+        self.timeStampSort = function() {
+            if (self.listHelper.currentSorting() == "timestampDesc") {
+                self.listHelper.changeSorting("timestampAsc");
+            } else {
+                self.listHelper.changeSorting("timestampDesc");
+            }
+        };
+
+        self.printTimeSort = function() {
+            if (self.listHelper.currentSorting() == "printTimeDesc") {
+                self.listHelper.changeSorting("printTimeAsc");
+            } else {
+                self.listHelper.changeSorting("printTimeDesc");
+            }
+        };
+
+        self.sortOrder = function(orderType) {
+            var order = "";
+
+            if (orderType == "fileName") {
+                order = (self.listHelper.currentSorting() == 'fileNameAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'fileNameDesc') ? '(' + _('descending') + ')' : '';
+            } else if (orderType == "timestamp") {
+                order = (self.listHelper.currentSorting() == 'timestampAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'timestampDesc') ? '(' + _('descending') + ')' : '';
+            } else {
+                order = (self.listHelper.currentSorting() == 'printTimeAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'printTimeDesc') ? '(' + _('descending') + ')' : '';
+            }
+
+            return order;
+        };
 
         self.fromCurrentData = function (data) {
             var isPrinting = data.state.flags.printing;
@@ -98,7 +160,7 @@ $(function() {
                     note: self.pureData[key].hasOwnProperty('note') ? self.pureData[key].note : ""
                 });
 
-                totalTime += self.pureData[key].printTime;
+                totalTime += (self.pureData[key].printTime !== undefined) ? self.pureData[key].printTime : 0;
                 totalUsage["length"] += (self.pureData[key].success == true) ? self.pureData[key].filamentLength : 0;
                 totalUsage["volume"] += (self.pureData[key].success == true) ? self.pureData[key].filamentVolume : 0;
             });
@@ -123,10 +185,6 @@ $(function() {
             self.requestData();
         };
 
-        self.editAnnotation = function (key) {
-            // TODO - add some additional info about each print
-        };
-
         self.changeGraphRange = function (range) {
             if (range == 'week') {
                 self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'weeks').valueOf());
@@ -138,7 +196,6 @@ $(function() {
 
             self.updatePlots();
         };
-
 
         function printhistoryLabelFormatter(label, series) {
             return "<div style='font-size:8pt; text-align:center; padding:2px; color: #666666;'>" + label + "<br/>" + Math.round(series.percent) + "%</div>";
