@@ -31,7 +31,7 @@
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>
             <td data-bind="text: formatDate(timestamp), attr: { title: formatTimeAgo(timestamp) }"></td>
             <td style="text-align: center;" data-bind="text: formatDuration(printTime)"></td>
-            <td style="text-align: center;" data-bind="text: filamentUsage"></td>
+            <td style="text-align: center;" data-bind="html: filamentUsage"></td>
             <td>
                 <a href="#" class="icon-trash" data-bind="click: function() { if ($root.loginState.isUser() && !$root.isPrinting()) { $root.removeFile($data.key); } else { return; } }, visible: $root.loginState.isUser() && !$root.isPrinting()"></a>
             </td>

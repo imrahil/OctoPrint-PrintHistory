@@ -154,15 +154,24 @@ $(function() {
                     key: key,
                     fileName: self.pureData[key].fileName,
                     success: self.pureData[key].success,
-                    filamentUsage: (self.pureData[key].success == true) ? formatFilament({length: self.pureData[key].filamentLength, volume: self.pureData[key].filamentVolume}) : "-",
+                    filamentUsage: (self.pureData[key].success == true) ? self.formatFilament(self.pureData[key]) : "-",
                     timestamp: self.pureData[key].timestamp,
                     printTime: self.pureData[key].printTime,
                     note: self.pureData[key].hasOwnProperty('note') ? self.pureData[key].note : ""
                 });
 
                 totalTime += (self.pureData[key].printTime !== undefined) ? self.pureData[key].printTime : 0;
-                totalUsage["length"] += (self.pureData[key].success == true) ? self.pureData[key].filamentLength : 0;
-                totalUsage["volume"] += (self.pureData[key].success == true) ? self.pureData[key].filamentVolume : 0;
+                if (self.pureData[key].success == true) {
+                    if (self.pureData[key].hasOwnProperty('filamentLength')) {
+                        totalUsage["length"] += self.pureData[key].filamentLength;
+                        totalUsage["volume"] += self.pureData[key].filamentVolume;
+                    }
+
+                    if (self.pureData[key].hasOwnProperty('filamentLength2')) {
+                        totalUsage["length"] += self.pureData[key].filamentLength2;
+                        totalUsage["volume"] += self.pureData[key].filamentVolume2;
+                    }
+                }
             });
 
             self.totalTime(formatDuration(totalTime));
@@ -171,6 +180,32 @@ $(function() {
             self.listHelper.updateItems(dataRows);
 
             self.updatePlots();
+        };
+
+        self.formatFilament = function(data) {
+            var tool0 = "";
+            var tool1 = "";
+            var output = "";
+
+            if (data.hasOwnProperty('filamentLength')) {
+                tool0 += formatFilament({length: data.filamentLength, volume: data.filamentVolume});
+            }
+
+            if (data.hasOwnProperty('filamentLength2')) {
+                tool1 += formatFilament({length: data.filamentLength2, volume: data.filamentVolume2});
+            }
+
+            if (tool0 !== "" && tool1 !== "") {
+                output = "Tool0: " + tool0 + "<br>Tool1: " + tool1;
+            } else {
+                if (tool0 !== "") {
+                    output = tool0;
+                } else {
+                    output = tool1;
+                }
+            }
+
+            return output;
         };
 
         self.export = function(type) {

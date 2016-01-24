@@ -130,6 +130,8 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                 except:
                     self._console_logger.exception("Error while reading .metadata.yaml from {path}".format(**locals()))
                 else:
+                    if not history_dict:
+                        history_dict = dict()
                     return history_dict
         return dict()
 

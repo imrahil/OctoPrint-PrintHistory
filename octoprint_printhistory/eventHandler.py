@@ -6,7 +6,7 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 
 def eventHandler(self, event, payload):
     import octoprint.events
-
+    import time
     from operator import itemgetter
 
     supported_event = None
@@ -31,6 +31,7 @@ def eventHandler(self, event, payload):
 
     if fileData is not None:
         timestamp = 0
+        success = None
 
         self._console_logger.info("Metadata for: %s" % fileName)
         currentFile = {
@@ -40,13 +41,26 @@ def eventHandler(self, event, payload):
 
         # analysis - looking for info about filament usage
         if "analysis" in fileData:
-            if "filament" in fileData["analysis"] and "tool0" in fileData["analysis"]["filament"]:
-                filamentVolume = fileData["analysis"]["filament"]["tool0"]["volume"]    # TODO - "tool0" means there is no dual extruder support
-                filamentLength = fileData["analysis"]["filament"]["tool0"]['length']
+            if "filament" in fileData["analysis"]:
+                if "tool0" in fileData["analysis"]["filament"]:
+                    filamentVolume = fileData["analysis"]["filament"]["tool0"]["volume"]
+                    filamentLength = fileData["analysis"]["filament"]["tool0"]['length']
 
-                currentFile["filamentVolume"] = filamentVolume
-                currentFile["filamentLength"] = filamentLength
-                self._console_logger.info("Filament volume: %s, Length: %s" % (filamentVolume, filamentLength))
+                    currentFile["filamentVolume"] = filamentVolume
+                    currentFile["filamentLength"] = filamentLength
+                    self._console_logger.info("Filament volume: %s, Length: %s" % (filamentVolume, filamentLength))
+
+                if "tool1" in fileData["analysis"]["filament"]:
+                    filamentVolume = fileData["analysis"]["filament"]["tool1"]["volume"]
+                    filamentLength = fileData["analysis"]["filament"]["tool1"]['length']
+
+                    currentFile["filamentVolume2"] = filamentVolume
+                    currentFile["filamentLength2"] = filamentLength
+
+                    self._console_logger.info("Tool 2 - Filament volume: %s, Length: %s" % (filamentVolume, filamentLength))
+
+                if "tool0" in fileData["analysis"]["filament"] and "tool1" in fileData["analysis"]["filament"]:
+                    currentFile["note"] = "Dual extrusion"
 
         # how long print took
         if "statistics" in fileData:
@@ -69,13 +83,26 @@ def eventHandler(self, event, payload):
                 success = last["success"]
                 timestamp = last["timestamp"]
 
-                currentFile["success"] = success
-                currentFile["timestamp"] = timestamp
-                self._console_logger.info("Success: %s, Timestamp: %s" % (success, timestamp))
+        if not success:
+            success = False if event == octoprint.events.Events.PRINT_CANCELLED else True
 
-        rounded_timestamp = int(timestamp * 1000);
+        if timestamp == 0:
+            timestamp = time.time()
 
         history_dict = self._getHistoryDict()
+        rounded_timestamp = int(timestamp * 1000);
+
+        if history_dict.has_key(rounded_timestamp):
+            self._console_logger.info("Missing history data - probably not saved to metadata.yaml yet")
+            success = False if event == octoprint.events.Events.PRINT_CANCELLED else True
+            timestamp = time.time()
+            rounded_timestamp = int(timestamp * 1000);
+
+        currentFile["success"] = success
+        currentFile["timestamp"] = timestamp
+
+        self._console_logger.info("Success: %s, Timestamp: %s" % (success, timestamp))
+
         history_dict[rounded_timestamp] = currentFile
 
         try:
