@@ -6,7 +6,6 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 
 def eventHandler(self, event, payload):
     import octoprint.events
-    import os
 
     from operator import itemgetter
 
@@ -23,7 +22,7 @@ def eventHandler(self, event, payload):
     if supported_event is None:
         return
 
-    self._logger.info("event: %s" % supported_event)
+    self._console_logger.info("Handled event: %s" % supported_event)
     try:
         fileData = self._file_manager.get_metadata(payload["origin"], payload["file"])
         fileName = payload["filename"]
@@ -31,10 +30,9 @@ def eventHandler(self, event, payload):
         fileData = None
 
     if fileData is not None:
-        data = {}
         timestamp = 0
 
-        self._logger.info("metadata for %s" % fileName)
+        self._console_logger.info("Metadata for: %s" % fileName)
         currentFile = {
             "fileName": fileName,
             "note": ""
@@ -48,7 +46,7 @@ def eventHandler(self, event, payload):
 
                 currentFile["filamentVolume"] = filamentVolume
                 currentFile["filamentLength"] = filamentLength
-                self._logger.info("filament volume: %s, length: %s" % (filamentVolume, filamentLength))
+                self._console_logger.info("Filament volume: %s, Length: %s" % (filamentVolume, filamentLength))
 
         # how long print took
         if "statistics" in fileData:
@@ -57,7 +55,7 @@ def eventHandler(self, event, payload):
                 printTime = fileData["statistics"]["lastPrintTime"][printer_profile]
 
                 currentFile["printTime"] = printTime
-                self._logger.info("printTime: %s" % printTime)
+                self._console_logger.info("PrintTime: %s" % printTime)
 
         # when print happened and what was result
         if "history" in fileData:
@@ -73,14 +71,17 @@ def eventHandler(self, event, payload):
 
                 currentFile["success"] = success
                 currentFile["timestamp"] = timestamp
-                self._logger.info("success: %s, timestamp: %s" % (success, timestamp))
+                self._console_logger.info("Success: %s, Timestamp: %s" % (success, timestamp))
 
         rounded_timestamp = int(timestamp * 1000);
-        data[rounded_timestamp] = currentFile
 
-        with open(self._history_file_path, "a") as f:
-            try:
-                import yaml
-                yaml.safe_dump(data, f, default_flow_style=False, indent="  ", allow_unicode=True)
-            except:
-                self._logger.exception("Error while writing history.yaml")
+        history_dict = self._getHistoryDict()
+        history_dict[rounded_timestamp] = currentFile
+
+        try:
+            import yaml
+            from octoprint.util import atomic_write
+            with atomic_write(self._history_file_path) as f:
+                yaml.safe_dump(history_dict, stream=f, default_flow_style=False, indent="  ", allow_unicode=True)
+        except:
+            self._console_logger.exception("Error while writing history.yaml to {path}".format(**locals()))

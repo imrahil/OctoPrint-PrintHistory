@@ -10,7 +10,8 @@ from flask import jsonify
 import flask
 
 import octoprint.plugin
-
+import logging
+     
 class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                          octoprint.plugin.EventHandlerPlugin,
                          octoprint.plugin.SettingsPlugin,
@@ -20,10 +21,23 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
     def __init__(self):
         self._history_file_path = None
+        self._console_logger = None
 
+    def initialize(self):
+        self._console_logger = logging.getLogger("octoprint.plugins.printhistory.console")
+
+    def on_startup(self, host, port):
+        console_logging_handler = logging.handlers.RotatingFileHandler(self._settings.get_plugin_logfile_path(postfix="console"), maxBytes=2*1024*1024)
+        console_logging_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+        console_logging_handler.setLevel(logging.DEBUG)
+  
+        self._console_logger.addHandler(console_logging_handler)
+        self._console_logger.setLevel(logging.DEBUG)
+        self._console_logger.propagate = False
+    
     def on_after_startup(self):
-        self._logger.debug("Plugins folder: %s" % self._settings.getBaseFolder("plugins"))
-        self._logger.debug("Uploads folder: %s" % self._settings.getBaseFolder("uploads"))
+        self._console_logger.debug("Plugins folder: %s" % self._settings.getBaseFolder("plugins"))
+        self._console_logger.debug("Uploads folder: %s" % self._settings.getBaseFolder("uploads"))
 
         old_path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
         self._history_file_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
@@ -51,75 +65,54 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
     @octoprint.plugin.BlueprintPlugin.route("/history", methods=["GET"])
     def getHistoryData(self):
-        import yaml
+        self._console_logger.debug("Rendering history.yaml")
 
-        self._logger.debug("Rendering history.yaml")
+        history_dict = self._getHistoryDict()
 
-        history_dict = {}
-        if os.path.exists(self._history_file_path):
-            with open(self._history_file_path, "r") as f:
-                try:
-                    history_dict = yaml.safe_load(f)
-                except:
-                    raise IOError("Couldn't read history data from {path}".format(path=self._history_file_path))
-
-            if history_dict is not None:
-                self._logger.debug("Returning data")
-                return jsonify(history=history_dict)
-            else:
-                self._logger.debug("Empty file history.yaml")
-                return jsonify({})
+        if history_dict is not None:
+            self._console_logger.debug("Returning data")
+            return jsonify(history=history_dict)
         else:
-            self._logger.debug("File doesn't exist")
+            self._console_logger.debug("Empty file history.yaml")
             return jsonify({})
 
     @octoprint.plugin.BlueprintPlugin.route("/history/<int:identifier>", methods=["DELETE"])
     def deleteHistoryData(self, identifier):
-        self._logger.debug("Delete file: %s" % identifier)
+        self._console_logger.debug("Delete file: %s" % identifier)
 
-        import yaml
         from octoprint.server import NO_CONTENT
 
-        if os.path.exists(self._history_file_path):
-            with open(self._history_file_path, "r") as f:
-                try:
-                    history_dict = yaml.safe_load(f)
+        history_dict = self._getHistoryDict()
 
-                    if identifier in history_dict:
-                        self._logger.debug("Found a identifier: %s" % identifier)
-                        del history_dict[identifier]
+        if identifier in history_dict:
+            self._console_logger.debug("Found a identifier: %s" % identifier)
+            del history_dict[identifier]
 
-                        if len(history_dict) == 0:
-                            open(self._history_file_path, "w")
-                        else:
-                            with open(self._history_file_path, "w") as f2:
-                                yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
-                except:
-                    raise IOError("Couldn't read history data from {path}".format(path=self._history_file_path))
+            if len(history_dict) == 0:
+                open(self._history_file_path, "w")
+            else:
+                with open(self._history_file_path, "w") as f2:
+                    import yaml
+                    yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
 
         return NO_CONTENT
 
     @octoprint.plugin.BlueprintPlugin.route("/savenote", methods=["POST"])
     def saveNote(self):
         identifier = int(flask.request.values["pk"])
-        self._logger.debug("Saving note: %s" % identifier)
+        self._console_logger.debug("Saving note: %s" % identifier)
 
-        import yaml
         from octoprint.server import NO_CONTENT
 
-        if os.path.exists(self._history_file_path):
-            with open(self._history_file_path, "r") as f:
-                try:
-                    history_dict = yaml.safe_load(f)
+        history_dict = self._getHistoryDict()
 
-                    if identifier in history_dict:
-                        self._logger.debug("Found a identifier: %s" % identifier)
-                        history_dict[identifier]["note"] = flask.request.values["value"]
+        if identifier in history_dict:
+            self._console_logger.debug("Found a identifier: %s" % identifier)
+            history_dict[identifier]["note"] = flask.request.values["value"]
 
-                        with open(self._history_file_path, "w") as f2:
-                            yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
-                except:
-                    raise IOError("Couldn't read history data from {path}".format(path=self._history_file_path))
+            with open(self._history_file_path, "w") as f2:
+                import yaml
+                yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
 
         return NO_CONTENT
 
@@ -128,6 +121,17 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         from . import export
         return export.exportHistoryData(self, exportType)
 
+    def _getHistoryDict(self):
+        if os.path.exists(self._history_file_path):
+            with open(self._history_file_path, "r") as f:
+                try:
+                    import yaml
+                    history_dict = yaml.safe_load(f)
+                except:
+                    self._console_logger.exception("Error while reading .metadata.yaml from {path}".format(**locals()))
+                else:
+                    return history_dict
+        return dict()
 
     ##~~ Softwareupdate hook
     def get_update_information(self):
