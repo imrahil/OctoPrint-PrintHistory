@@ -15,7 +15,7 @@ def eventHandler(self, event, payload):
     if event == octoprint.events.Events.PRINT_DONE:
         supported_event = event
 
-    elif event == octoprint.events.Events.PRINT_CANCELLED:
+    elif event == octoprint.events.Events.PRINT_FAILED:
         supported_event = event
 
     # unsupported event
@@ -25,7 +25,7 @@ def eventHandler(self, event, payload):
     self._console_logger.info("Handled event: %s" % supported_event)
     try:
         fileData = self._file_manager.get_metadata(payload["origin"], payload["file"])
-        fileName = payload["filename"]
+        fileName = payload["file"] if supported_event == octoprint.events.Events.PRINT_FAILED else payload["filename"]
     except:
         fileData = None
 
@@ -84,7 +84,7 @@ def eventHandler(self, event, payload):
                 timestamp = last["timestamp"]
 
         if not success:
-            success = False if event == octoprint.events.Events.PRINT_CANCELLED else True
+            success = False if event == octoprint.events.Events.PRINT_FAILED else True
 
         if timestamp == 0:
             timestamp = time.time()
