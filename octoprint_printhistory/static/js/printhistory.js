@@ -187,11 +187,11 @@ $(function() {
             var tool1 = "";
             var output = "";
 
-            if (data.hasOwnProperty('filamentLength')) {
+            if (data.hasOwnProperty('filamentLength') && data.filamentLength != 0) {
                 tool0 += formatFilament({length: data.filamentLength, volume: data.filamentVolume});
             }
 
-            if (data.hasOwnProperty('filamentLength2')) {
+            if (data.hasOwnProperty('filamentLength2') && data.filamentLength2 != 0) {
                 tool1 += formatFilament({length: data.filamentLength2, volume: data.filamentVolume2});
             }
 

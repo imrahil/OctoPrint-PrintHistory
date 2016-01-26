@@ -59,8 +59,9 @@ def eventHandler(self, event, payload):
 
                     self._console_logger.info("Tool 2 - Filament volume: %s, Length: %s" % (filamentVolume, filamentLength))
 
-                if "tool0" in fileData["analysis"]["filament"] and "tool1" in fileData["analysis"]["filament"]:
-                    currentFile["note"] = "Dual extrusion"
+                # Temporarily disabled
+                # if "tool0" in fileData["analysis"]["filament"] and "tool1" in fileData["analysis"]["filament"]:
+                #     currentFile["note"] = "Dual extrusion"
 
         # how long print took
         if "statistics" in fileData:
