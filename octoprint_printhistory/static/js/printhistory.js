@@ -8,6 +8,9 @@ $(function() {
         self.totalUsage = ko.observable();
         self.isPrinting = ko.observable(undefined);
 
+        self.onHistoryTab = false;
+        self.dataIsStale = true;
+        self.requestingData = false;
         self.pureData = {};
         self.lastMonthGraphMinimum = ko.observable(moment(new Date()).subtract(1, 'months').valueOf());
 
@@ -128,14 +131,22 @@ $(function() {
         };
 
         self.requestData = function() {
+            if (!self.onHistoryTab) {
+                self.dataIsStale = true;
+                return;
+            }
             //console.log('PrintHistory - request data');
+            if (self.requestingData) {
+                return;
+            }
+            self.requestingData = true;
 
             $.ajax({
                 url: "plugin/printhistory/history",
                 type: "GET",
                 dataType: "json",
                 success: self.fromResponse
-            });
+            }).always(function() { self.requestingData = false; });
         };
 
         self.fromResponse = function(data) {
@@ -173,6 +184,8 @@ $(function() {
                     }
                 }
             });
+
+            self.dataIsStale = false;
 
             self.totalTime(formatDuration(totalTime));
             self.totalUsage(formatFilament(totalUsage));
@@ -216,10 +229,6 @@ $(function() {
             }
         };
 
-        self.onStartupComplete = function () {
-            self.requestData();
-        };
-
         self.changeGraphRange = function (range) {
             if (range == 'week') {
                 self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'weeks').valueOf());
@@ -237,6 +246,15 @@ $(function() {
         }
 
         self.updatePlots = function() {
+            if (!self.onHistoryTab) {
+                return;
+            }
+
+            if (self.dataIsStale) {
+                self.requestData();
+                return;
+            }
+
             var lastmonth_graph = $("#printhistory-lastmonth-graph");
             var success_graph = $("#printhistory-success-graph");
 
@@ -339,9 +357,7 @@ $(function() {
         };
 
         self.onAfterTabChange = function(current, previous) {
-            if (current != "#tab_plugin_printhistory") {
-                return;
-            }
+            self.onHistoryTab = current == "#tab_plugin_printhistory"
             self.updatePlots();
         }
     }

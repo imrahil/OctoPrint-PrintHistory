@@ -22,6 +22,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def __init__(self):
         self._history_file_path = None
         self._console_logger = None
+        self._history_dict = None
 
     def initialize(self):
         self._console_logger = logging.getLogger("octoprint.plugins.printhistory.console")
@@ -122,6 +123,11 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         return export.exportHistoryData(self, exportType)
 
     def _getHistoryDict(self):
+        if self._history_dict is not None:
+            return self._history_dict
+
+        history_dict = None
+
         if os.path.exists(self._history_file_path):
             with open(self._history_file_path, "r") as f:
                 try:
@@ -129,10 +135,12 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                     history_dict = yaml.safe_load(f)
                 except:
                     self._console_logger.exception("Error while reading .metadata.yaml from {path}".format(**locals()))
-                else:
-                    if not history_dict:
-                        history_dict = dict()
-                    return history_dict
+
+        if history_dict is None:
+            history_dict = dict()
+
+        self._history_dict = history_dict
+
         return dict()
 
     ##~~ Softwareupdate hook
