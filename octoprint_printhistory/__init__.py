@@ -12,8 +12,7 @@ import flask
 from octoprint.server.util.flask import with_revalidation_checking, check_etag
 
 import octoprint.plugin
-import logging
-     
+
 class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                          octoprint.plugin.EventHandlerPlugin,
                          octoprint.plugin.SettingsPlugin,
@@ -23,26 +22,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
     def __init__(self):
         self._history_file_path = None
-        self._console_logger = None
         self._history_dict = None
 
-    def initialize(self):
-        self._console_logger = logging.getLogger("octoprint.plugins.printhistory.console")
-
-    def on_startup(self, host, port):
-        console_logging_handler = logging.handlers.RotatingFileHandler(self._settings.get_plugin_logfile_path(postfix="console"), maxBytes=2*1024*1024)
-        console_logging_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
-        console_logging_handler.setLevel(logging.DEBUG)
-  
-        self._console_logger.addHandler(console_logging_handler)
-        self._console_logger.setLevel(logging.DEBUG)
-        self._console_logger.propagate = False
-    
     def on_after_startup(self):
-        self._console_logger.debug("Plugins folder: %s" % self._settings.getBaseFolder("plugins"))
-        self._console_logger.debug("Uploads folder: %s" % self._settings.getBaseFolder("uploads"))
-        self._console_logger.debug("history.yaml location: %s" % self.get_plugin_data_folder())
-
         old_path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
         self._history_file_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
         if os.path.exists(old_path):
@@ -70,18 +52,14 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def getHistoryData(self):
         from octoprint.settings import valid_boolean_trues
 
-        self._console_logger.debug("Rendering history.yaml")
-
         force = flask.request.values.get("force", "false") in valid_boolean_trues
 
         def view():
             history_dict = self._getHistoryDict()
 
             if history_dict is not None:
-                self._console_logger.debug("Returning data")
                 result = jsonify(history=history_dict)
             else:
-                self._console_logger.debug("Empty file history.yaml")
                 result = jsonify({})
 
             return result
@@ -107,14 +85,11 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
     @octoprint.plugin.BlueprintPlugin.route("/history/<int:identifier>", methods=["DELETE"])
     def deleteHistoryData(self, identifier):
-        self._console_logger.debug("Delete file: %s" % identifier)
-
         from octoprint.server import NO_CONTENT
 
         history_dict = self._getHistoryDict()
 
         if identifier in history_dict:
-            self._console_logger.debug("Found a identifier: %s" % identifier)
             del history_dict[identifier]
 
             if len(history_dict) == 0:
@@ -129,14 +104,12 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     @octoprint.plugin.BlueprintPlugin.route("/savenote", methods=["POST"])
     def saveNote(self):
         identifier = int(flask.request.values["pk"])
-        self._console_logger.debug("Saving note: %s" % identifier)
 
         from octoprint.server import NO_CONTENT
 
         history_dict = self._getHistoryDict()
 
         if identifier in history_dict:
-            self._console_logger.debug("Found a identifier: %s" % identifier)
             history_dict[identifier]["note"] = flask.request.values["value"]
 
             with open(self._history_file_path, "w") as f2:
@@ -162,7 +135,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                     import yaml
                     history_dict = yaml.safe_load(f)
                 except:
-                    self._console_logger.exception("Error while reading .metadata.yaml from {path}".format(**locals()))
+                    raise
 
         if history_dict is None:
             history_dict = dict()
