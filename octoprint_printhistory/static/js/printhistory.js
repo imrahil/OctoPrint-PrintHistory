@@ -119,11 +119,11 @@ $(function() {
             self.isPrinting(isPrinting);
         };
 
-        self.removeFile = function(key) {
-            //console.log('PrintHistory - remove file: ' + key);
+        self.removeFile = function(id) {
+            //console.log('PrintHistory - remove file: ' + id);
 
             $.ajax({
-                url: "plugin/printhistory/history/" + key,
+                url: "plugin/printhistory/history/" + id,
                 type: "DELETE",
                 dataType: "json",
                 success: self.requestData
@@ -169,13 +169,13 @@ $(function() {
 
             _.each(_.keys(self.pureData), function(key) {
                 dataRows.push({
-                    key: key,
+                    id: self.pureData[key].id,
                     fileName: self.pureData[key].fileName,
-                    success: self.pureData[key].success,
+                    success: (self.pureData[key].success == 1),
                     filamentUsage: (self.pureData[key].success == true) ? self.formatFilament(self.pureData[key]) : "-",
-                    timestamp: self.pureData[key].timestamp,
-                    printTime: self.pureData[key].printTime,
-                    note: self.pureData[key].hasOwnProperty('note') ? self.pureData[key].note : ""
+                    timestamp: (self.pureData[key].timestamp != null) ? self.pureData[key].timestamp : "",
+                    printTime: (self.pureData[key].printTime != null) ? self.pureData[key].printTime : "",
+                    note: (self.pureData[key].note != null) ? self.pureData[key].note : ""
                 });
 
                 totalTime += (self.pureData[key].printTime !== undefined) ? self.pureData[key].printTime : 0;

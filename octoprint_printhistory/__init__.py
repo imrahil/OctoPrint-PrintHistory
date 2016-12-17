@@ -4,14 +4,14 @@ import os
 
 __author__ = "Jarek Szczepanski <imrahil@imrahil.com>"
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
-__copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of the AGPLv3 License"
+__copyright__ = "Copyright (C) 2016 Jarek Szczepanski - Released under terms of the AGPLv3 License"
 
-from flask import jsonify
-import flask
-
+from flask import jsonify, request
 from octoprint.server.util.flask import with_revalidation_checking, check_etag
 
 import octoprint.plugin
+
+import sqlite3
 
 class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                          octoprint.plugin.EventHandlerPlugin,
@@ -21,14 +21,82 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                          octoprint.plugin.AssetPlugin):
 
     def __init__(self):
-        self._history_file_path = None
+        self._history_db_path = None
         self._history_dict = None
 
     def on_after_startup(self):
-        old_path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
-        self._history_file_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
+        old_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
+        self._history_db_path = os.path.join(self.get_plugin_data_folder(), "history.db")
+
+        conn = sqlite3.connect(self._history_db_path)
+        cur  = conn.cursor()
+        create_sql = """\
+        CREATE TABLE IF NOT EXISTS print_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fileName TEXT,
+            note TEXT,
+            filamentVolume REAL,
+            filamentLength REAL,
+            printTime REAL,
+            success INTEGER,
+            timestamp REAL
+        );
+
+        CREATE TABLE IF NOT EXISTS modifications (
+            id INTEGER NOT NULL PRIMARY KEY ON CONFLICT REPLACE,
+            action TEXT NOT NULL,
+            changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TRIGGER IF NOT EXISTS history_ondelete AFTER DELETE ON print_history
+        BEGIN
+            INSERT INTO modifications (id, action) VALUES (old.id, 'DELETE');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS history_onupdate AFTER UPDATE ON print_history
+        BEGIN
+            INSERT INTO modifications (id, action) VALUES (old.id, 'UPDATE');
+        END;
+
+        CREATE TRIGGER IF NOT EXISTS history_oninsert AFTER INSERT ON print_history
+        BEGIN
+            INSERT INTO modifications (id, action) VALUES (new.id, 'INSERT');
+        END;
+        """
+        cur.executescript(create_sql)
+        conn.commit()
+
         if os.path.exists(old_path):
-            os.rename(old_path, self._history_file_path)
+            with open(old_path, "r") as f:
+                try:
+                    from yaml import safe_load
+                    history_dict = safe_load(f)
+                except:
+                    raise
+
+            if history_dict is None:
+                history_dict = dict()
+
+            history = []
+            for historyHash in history_dict.keys():
+                historyDetails = history_dict[historyHash]
+                row = list()
+                row.append(historyDetails["fileName"] if "fileName" in historyDetails else None)
+                row.append(historyDetails["note"] if "note" in historyDetails else None)
+                row.append(historyDetails["filamentVolume"] if "filamentVolume" in historyDetails else None)
+                row.append(historyDetails["filamentLength"] if "filamentLength" in historyDetails else None)
+                row.append(historyDetails["printTime"] if "printTime" in historyDetails else None)
+                success = historyDetails["success"] if "success" in historyDetails else None
+                row.append(1 if success is True else 0)
+                row.append(historyDetails["timestamp"] if "timestamp" in historyDetails else None)
+                history.append(row)
+
+            cur.executemany('''INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)''', history)
+            conn.commit()
+
+            os.rename(old_path, os.path.join(self.get_plugin_data_folder(), "history.bak"))
+
+        conn.close()
 
      ##~~ TemplatePlugin API
     def get_template_configs(self):
@@ -52,7 +120,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def getHistoryData(self):
         from octoprint.settings import valid_boolean_trues
 
-        force = flask.request.values.get("force", "false") in valid_boolean_trues
+        force = request.values.get("force", "false") in valid_boolean_trues
 
         def view():
             history_dict = self._getHistoryDict()
@@ -65,8 +133,11 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             return result
 
         def etag():
-            stat = os.stat(self._history_file_path)
-            lm = stat.st_mtime
+            conn = sqlite3.connect(self._history_db_path)
+            cur  = conn.cursor()
+            cur.execute("SELECT changed_at FROM modifications ORDER BY changed_at DESC LIMIT 1")
+            lm = cur.fetchone()
+            conn.close()
 
             import hashlib
             hash = hashlib.sha1()
@@ -87,30 +158,26 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def deleteHistoryData(self, identifier):
         from octoprint.server import NO_CONTENT
 
-        history_dict = self._getHistoryDict()
+        self._history_dict = None
 
-        if identifier in history_dict:
-            del history_dict[identifier]
-
-            if len(history_dict) == 0:
-                open(self._history_file_path, "w")
-            else:
-                with open(self._history_file_path, "w") as f2:
-                    import yaml
-                    yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
+        conn = sqlite3.connect(self._history_db_path)
+        cur  = conn.cursor()
+        cur.execute("DELETE FROM print_history WHERE id = ?", (identifier,))
+        conn.commit()
+        conn.close()
 
         return NO_CONTENT
 
     @octoprint.plugin.BlueprintPlugin.route("/savenote", methods=["POST"])
     def saveNote(self):
-        identifier = int(flask.request.values["pk"])
+        identifier = int(request.values["pk"])
 
         from octoprint.server import NO_CONTENT
 
         history_dict = self._getHistoryDict()
 
         if identifier in history_dict:
-            history_dict[identifier]["note"] = flask.request.values["value"]
+            history_dict[identifier]["note"] = request.values["value"]
 
             with open(self._history_file_path, "w") as f2:
                 import yaml
@@ -123,19 +190,21 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         from . import export
         return export.exportHistoryData(self, exportType)
 
+    #
+    # private methods
+    #
+
     def _getHistoryDict(self):
         if self._history_dict is not None:
             return self._history_dict
 
-        history_dict = None
+        conn = sqlite3.connect(self._history_db_path)
+        cur  = conn.cursor()
+        cur.execute("SELECT * FROM print_history ORDER BY timestamp")
+        history_dict = [dict((cur.description[i][0], value) \
+                  for i, value in enumerate(row)) for row in cur.fetchall()]
 
-        if os.path.exists(self._history_file_path):
-            with open(self._history_file_path, "r") as f:
-                try:
-                    import yaml
-                    history_dict = yaml.safe_load(f)
-                except:
-                    raise
+        conn.close()
 
         if history_dict is None:
             history_dict = dict()
