@@ -172,7 +172,7 @@ $(function() {
                     id: self.pureData[key].id,
                     fileName: self.pureData[key].fileName,
                     success: (self.pureData[key].success == 1),
-                    filamentUsage: (self.pureData[key].success == true) ? self.formatFilament(self.pureData[key]) : "-",
+                    filamentUsage: self.formatFilament(self.pureData[key]),
                     timestamp: (self.pureData[key].timestamp != null) ? self.pureData[key].timestamp : "",
                     printTime: (self.pureData[key].printTime != null) ? self.pureData[key].printTime : "",
                     note: (self.pureData[key].note != null) ? self.pureData[key].note : ""
