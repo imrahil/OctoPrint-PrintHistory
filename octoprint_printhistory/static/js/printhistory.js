@@ -130,7 +130,13 @@ $(function() {
             });
         };
 
-        self.requestData = function() {
+        self.requestData = function(params) {
+            var force = false;
+
+            if (_.isObject(params)) {
+                force = params.force;
+            }
+
             if (!self.onHistoryTab) {
                 self.dataIsStale = true;
                 return;
@@ -144,6 +150,7 @@ $(function() {
             $.ajax({
                 url: "plugin/printhistory/history",
                 type: "GET",
+                data: {force: force},
                 dataType: "json",
                 success: self.fromResponse
             }).always(function() { self.requestingData = false; });

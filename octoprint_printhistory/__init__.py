@@ -9,6 +9,8 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 from flask import jsonify
 import flask
 
+from octoprint.server.util.flask import with_revalidation_checking, check_etag
+
 import octoprint.plugin
 import logging
      
@@ -39,6 +41,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def on_after_startup(self):
         self._console_logger.debug("Plugins folder: %s" % self._settings.getBaseFolder("plugins"))
         self._console_logger.debug("Uploads folder: %s" % self._settings.getBaseFolder("uploads"))
+        self._console_logger.debug("history.yaml location: %s" % self.get_plugin_data_folder())
 
         old_path = os.path.join(self._settings.getBaseFolder("uploads"), "history.yaml")
         self._history_file_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
@@ -63,19 +66,44 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         from . import eventHandler
         return eventHandler.eventHandler(self, event, payload)
 
-
     @octoprint.plugin.BlueprintPlugin.route("/history", methods=["GET"])
     def getHistoryData(self):
+        from octoprint.settings import valid_boolean_trues
+
         self._console_logger.debug("Rendering history.yaml")
 
-        history_dict = self._getHistoryDict()
+        force = flask.request.values.get("force", "false") in valid_boolean_trues
 
-        if history_dict is not None:
-            self._console_logger.debug("Returning data")
-            return jsonify(history=history_dict)
-        else:
-            self._console_logger.debug("Empty file history.yaml")
-            return jsonify({})
+        def view():
+            history_dict = self._getHistoryDict()
+
+            if history_dict is not None:
+                self._console_logger.debug("Returning data")
+                result = jsonify(history=history_dict)
+            else:
+                self._console_logger.debug("Empty file history.yaml")
+                result = jsonify({})
+
+            return result
+
+        def etag():
+            stat = os.stat(self._history_file_path)
+            lm = stat.st_mtime
+
+            import hashlib
+            hash = hashlib.sha1()
+            hash.update(str(lm))
+            hexdigest = hash.hexdigest()
+            return hexdigest
+
+        def condition():
+            check = check_etag(etag())
+            return check
+
+        return with_revalidation_checking(etag_factory=lambda *args, **kwargs: etag(),
+                                          condition=lambda *args, **kwargs: condition(),
+                                          unless=lambda: force)(view)()
+
 
     @octoprint.plugin.BlueprintPlugin.route("/history/<int:identifier>", methods=["DELETE"])
     def deleteHistoryData(self, identifier):
@@ -141,7 +169,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
         self._history_dict = history_dict
 
-        return dict()
+        return self._history_dict
 
     ##~~ Softwareupdate hook
     def get_update_information(self):
