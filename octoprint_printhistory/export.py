@@ -9,8 +9,6 @@ def exportHistoryData(self, exportType):
     import csv
     import StringIO
 
-    self._console_logger.debug("Exporting history.yaml to %s" % exportType)
-
     history_dict = self._getHistoryDict()
 
     if history_dict is not None:
@@ -21,8 +19,7 @@ def exportHistoryData(self, exportType):
             writer = csv.writer(si, quoting=csv.QUOTE_ALL)
             writer.writerow(headers)
 
-            for historyHash in history_dict.keys():
-                historyDetails = history_dict[historyHash]
+            for historyDetails in history_dict:
                 output = list()
                 output.append(historyDetails["fileName"] if "fileName" in historyDetails and historyDetails["fileName"] is not None else "-")
                 output.append(historyDetails["timestamp"] if "timestamp" in historyDetails and historyDetails["timestamp"] is not None else "-")
@@ -47,8 +44,7 @@ def exportHistoryData(self, exportType):
                 col += 1
 
             row = 1
-            for historyHash in history_dict.keys():
-                historyDetails = history_dict[historyHash]
+            for historyDetails in history_dict:
                 worksheet.write(row, 0, (historyDetails["fileName"] if "fileName" in historyDetails and historyDetails["fileName"] is not None else "-"))
                 worksheet.write(row, 1, (historyDetails["timestamp"] if "timestamp" in historyDetails and historyDetails["timestamp"] is not None else "-"))
                 worksheet.write(row, 2, (historyDetails["success"] if "success" in historyDetails and historyDetails["success"] is not None else "-"))

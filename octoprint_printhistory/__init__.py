@@ -23,6 +23,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     def __init__(self):
         self._history_db_path = None
         self._history_dict = None
+        self._comm = None
 
     def on_after_startup(self):
         old_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
@@ -170,18 +171,18 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
     @octoprint.plugin.BlueprintPlugin.route("/savenote", methods=["POST"])
     def saveNote(self):
-        identifier = int(request.values["pk"])
-
         from octoprint.server import NO_CONTENT
 
-        history_dict = self._getHistoryDict()
+        identifier = int(request.values["pk"])
+        note = request.values["value"]
 
-        if identifier in history_dict:
-            history_dict[identifier]["note"] = request.values["value"]
+        self._history_dict = None
 
-            with open(self._history_file_path, "w") as f2:
-                import yaml
-                yaml.safe_dump(history_dict, f2, default_flow_style=False, indent="  ", allow_unicode=True)
+        conn = sqlite3.connect(self._history_db_path)
+        cur  = conn.cursor()
+        cur.execute("UPDATE print_history SET note = ? WHERE id = ?", (note, identifier))
+        conn.commit()
+        conn.close()
 
         return NO_CONTENT
 
@@ -231,6 +232,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             )
         )
 
+    def factory_serial_handler(self, comm_instance, port, baudrate, read_timeout):
+        self._comm = comm_instance
+        return None
 
 __plugin_name__ = "Print History Plugin"
 
@@ -240,5 +244,6 @@ def __plugin_load__():
 
 	global __plugin_hooks__
 	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+        "octoprint.comm.transport.serial.factory": __plugin_implementation__.factory_serial_handler
 	}

@@ -26,7 +26,7 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
         <tr>
             <td>
                 <span data-bind="text: fileName, attr: { title: fileName }"></span>
-                <a href="#" class="icon-pencil" data-bind="editable: note, editableOptions: {display: false, pk: id, url: 'plugin/printhistory/savenote', success: $root.requestData, error: function(){alert('grr')}}, visible: $root.loginState.isUser() && !$root.isPrinting()" title="Add/edit note"></a>
+                <a href="#" class="icon-pencil" data-bind="editable: note, editableOptions: {display: false, pk: id, url: 'plugin/printhistory/savenote', success: $root.requestData, error: function(){alert('Something went wrong. Please try again.')}}, visible: $root.loginState.isUser() && !$root.isPrinting()" title="Add/edit note"></a>
                 <div class="printhistory-note"><small data-bind="text: note"></small></div>
             </td>
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>

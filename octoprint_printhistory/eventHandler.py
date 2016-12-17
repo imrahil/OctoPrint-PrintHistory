@@ -9,6 +9,8 @@ def eventHandler(self, event, payload):
     import time
     from operator import itemgetter
 
+    import sqlite3
+
     supported_event = None
 
     # support for print done & cancelled events
@@ -22,18 +24,17 @@ def eventHandler(self, event, payload):
     if supported_event is None:
         return
 
-    self._console_logger.info("Handled event: %s" % supported_event)
     try:
         fileData = self._file_manager.get_metadata(payload["origin"], payload["file"])
-        fileName = payload["file"] if supported_event == octoprint.events.Events.PRINT_FAILED else payload["filename"]
     except:
         fileData = None
+
+    fileName = payload["name"]
 
     if fileData is not None:
         timestamp = 0
         success = None
 
-        self._console_logger.info("Metadata for: %s" % fileName)
         currentFile = {
             "fileName": fileName,
             "note": ""
@@ -48,7 +49,6 @@ def eventHandler(self, event, payload):
 
                     currentFile["filamentVolume"] = filamentVolume
                     currentFile["filamentLength"] = filamentLength
-                    self._console_logger.info("Filament volume: %s, Length: %s" % (filamentVolume, filamentLength))
 
                 if "tool1" in fileData["analysis"]["filament"]:
                     filamentVolume = fileData["analysis"]["filament"]["tool1"]["volume"]
@@ -57,22 +57,19 @@ def eventHandler(self, event, payload):
                     currentFile["filamentVolume2"] = filamentVolume
                     currentFile["filamentLength2"] = filamentLength
 
-                    self._console_logger.info("Tool 2 - Filament volume: %s, Length: %s" % (filamentVolume, filamentLength))
-
                 # Temporarily disabled
                 # if "tool0" in fileData["analysis"]["filament"] and "tool1" in fileData["analysis"]["filament"]:
                 #     currentFile["note"] = "Dual extrusion"
 
         # how long print took
-        if "statistics" in fileData:
-            printer_profile = self._printer_profile_manager.get_current_or_default()["id"]
-            if "lastPrintTime" in fileData["statistics"] and printer_profile in fileData["statistics"]["lastPrintTime"]:
-                printTime = fileData["statistics"]["lastPrintTime"][printer_profile]
+        if "time" in payload:
+            currentFile["printTime"] = payload["time"]
+        else:
+            printTime = self._comm.getPrintTime()
+            currentFile["printTime"] = printTime if printTime is not None else ""
 
-                currentFile["printTime"] = printTime
-                self._console_logger.info("PrintTime: %s" % printTime)
 
-        # when print happened and what was result
+        # when print happened and what was the result
         if "history" in fileData:
             history = fileData["history"]
 
@@ -90,26 +87,13 @@ def eventHandler(self, event, payload):
         if timestamp == 0:
             timestamp = time.time()
 
-        history_dict = self._getHistoryDict()
-        rounded_timestamp = int(timestamp * 1000);
-
-        if history_dict.has_key(rounded_timestamp):
-            self._console_logger.info("Missing history data - probably not saved to metadata.yaml yet")
-            success = False if event == octoprint.events.Events.PRINT_CANCELLED else True
-            timestamp = time.time()
-            rounded_timestamp = int(timestamp * 1000);
-
         currentFile["success"] = success
         currentFile["timestamp"] = timestamp
 
-        self._console_logger.info("Success: %s, Timestamp: %s" % (success, timestamp))
+        self._history_dict = None
 
-        history_dict[rounded_timestamp] = currentFile
-
-        try:
-            import yaml
-            from octoprint.util import atomic_write
-            with atomic_write(self._history_file_path) as f:
-                yaml.safe_dump(history_dict, stream=f, default_flow_style=False, indent="  ", allow_unicode=True)
-        except:
-            self._console_logger.exception("Error while writing history.yaml to {path}".format(**locals()))
+        conn = sqlite3.connect(self._history_db_path)
+        cur  = conn.cursor()
+        cur.execute("INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp) VALUES (:fileName, :note, :filamentVolume, :filamentLength, :printTime, :success, :timestamp)", currentFile)
+        conn.commit()
+        conn.close()
