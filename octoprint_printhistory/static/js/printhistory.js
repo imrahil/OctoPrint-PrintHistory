@@ -3,16 +3,27 @@ $(function() {
         var self = this;
 
         self.loginState = parameters[0];
+        self.global_settings = parameters[1];
 
         self.totalTime = ko.observable();
         self.totalUsage = ko.observable();
         self.isPrinting = ko.observable(undefined);
+
+        self.spool_inventory = ko.observableArray([]);
+        self.spool_inventory_base = [];
+        self.availableCurrencies = ko.observableArray(['$', '€', '£']);
 
         self.onHistoryTab = false;
         self.dataIsStale = true;
         self.requestingData = false;
         self.pureData = {};
         self.lastMonthGraphMinimum = ko.observable(moment(new Date()).subtract(1, 'months').valueOf());
+
+        self.onBeforeBinding = function () {
+            self.settings = self.global_settings.settings.plugins.printhistory;
+            self.spool_inventory = self.settings.spool_inventory;
+            self.spool_inventory_base = ko.toJS(self.settings.spool_inventory);
+        };
 
         self.listHelper = new ItemListHelper(
             "historyItems",
@@ -367,11 +378,27 @@ $(function() {
             self.onHistoryTab = current == "#tab_plugin_printhistory"
             self.updatePlots();
         }
+
+        self.addNewSpool = function() {
+            self.spool_inventory.push({name: "New", price:0, currency: "$"});
+        };
+
+        self.removeSpool = function(spool) {
+            self.spool_inventory.remove(spool);
+        };
+
+        self.onSettingsHidden = function() {
+            self.global_settings.settings.plugins.printhistory.spool_inventory = ko.fromJS(self.spool_inventory_base);
+        };
+
+        self.onSettingsBeforeSave = function () {
+            self.global_settings.settings.plugins.printhistory.spool_inventory = ko.toJS(self.spool_inventory);
+        }
     }
 
     ADDITIONAL_VIEWMODELS.push([
         PrintHistoryViewModel,
-        ["loginStateViewModel"],
-        ["#tab_plugin_printhistory"]
+        ["loginStateViewModel", "settingsViewModel"],
+        ["#tab_plugin_printhistory", "#settings_plugin_printhistory"]
     ]);
 });

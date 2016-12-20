@@ -60,6 +60,9 @@ def eventHandler(self, event, payload):
                 # Temporarily disabled
                 # if "tool0" in fileData["analysis"]["filament"] and "tool1" in fileData["analysis"]["filament"]:
                 #     currentFile["note"] = "Dual extrusion"
+        else:
+            currentFile["filamentVolume"] = 0
+            currentFile["filamentLength"] = 0
 
         # how long print took
         if "time" in payload:

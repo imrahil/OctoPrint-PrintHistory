@@ -99,10 +99,17 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
         conn.close()
 
-     ##~~ TemplatePlugin API
+    ##~~ SettingsPlugin API
+    def get_settings_defaults(self):
+        return dict(
+            spool_inventory=[]
+        )
+
+    ##~~ TemplatePlugin API
     def get_template_configs(self):
         return [
-            dict(type="tab", name="History")
+            dict(type="tab", name="History"),
+            dict(type="settings", template="printhistory_settings.jinja2")
         ]
 
     ##~~ AssetPlugin API
