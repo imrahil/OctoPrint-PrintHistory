@@ -17,6 +17,11 @@
     margin-bottom: 10px;
 }
 
-.printhistory-note {
-    color: #808080;
+#tab_plugin_printhistory td {
+    font-size: 13px;
+}
+
+#tab_plugin_printhistory .additionalInfo {
+    font-size: 85%;
+    color: #999;
 }

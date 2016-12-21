@@ -4,14 +4,20 @@ $(function() {
 
         self.loginState = parameters[0];
         self.global_settings = parameters[1];
+        self.users = parameters[2];
 
         self.totalTime = ko.observable();
         self.totalUsage = ko.observable();
         self.isPrinting = ko.observable(undefined);
 
         self.spool_inventory = ko.observableArray([]);
-        self.spool_inventory_base = [];
+        self.spool_inventory_base = ko.observableArray([]);
         self.availableCurrencies = ko.observableArray(['$', '€', '£']);
+
+        self.selectedItemId = ko.observable(undefined);
+        self.selectedItemNote = ko.observable(undefined);
+        self.selectedItemSpool = ko.observable(undefined);
+        self.selectedItemUser = ko.observable(undefined);
 
         self.onHistoryTab = false;
         self.dataIsStale = true;
@@ -19,10 +25,14 @@ $(function() {
         self.pureData = {};
         self.lastMonthGraphMinimum = ko.observable(moment(new Date()).subtract(1, 'months').valueOf());
 
+        self.onStartup = function () {
+            self.detailsDialog = $("#printhistory_details_dialog");
+        }
+
         self.onBeforeBinding = function () {
             self.settings = self.global_settings.settings.plugins.printhistory;
-            self.spool_inventory = self.settings.spool_inventory;
-            self.spool_inventory_base = ko.toJS(self.settings.spool_inventory);
+            self.spool_inventory(self.settings.spool_inventory.slice(0));
+            self.spool_inventory_base(self.settings.spool_inventory);
         };
 
         self.listHelper = new ItemListHelper(
@@ -186,7 +196,9 @@ $(function() {
                     filamentUsage: self.formatFilament(self.pureData[key]),
                     timestamp: (self.pureData[key].timestamp != null) ? self.pureData[key].timestamp : "",
                     printTime: (self.pureData[key].printTime != null) ? self.pureData[key].printTime : "",
-                    note: (self.pureData[key].note != null) ? self.pureData[key].note : ""
+                    note: (self.pureData[key].note != null) ? self.pureData[key].note : "",
+                    spool: (self.pureData[key].spool != null) ? self.pureData[key].spool : "",
+                    user: (self.pureData[key].user != null) ? self.pureData[key].user : ""
                 });
 
                 totalTime += (self.pureData[key].printTime !== undefined) ? self.pureData[key].printTime : 0;
@@ -388,17 +400,61 @@ $(function() {
         };
 
         self.onSettingsHidden = function() {
-            self.global_settings.settings.plugins.printhistory.spool_inventory = ko.fromJS(self.spool_inventory_base);
+            self.spool_inventory(self.spool_inventory_base.slice(0));
         };
 
         self.onSettingsBeforeSave = function () {
-            self.global_settings.settings.plugins.printhistory.spool_inventory = ko.toJS(self.spool_inventory);
+            self.global_settings.settings.plugins.printhistory.spool_inventory(self.spool_inventory.slice(0));
         }
+
+        self.showDetailsDialog = function(selectedData) {
+            if (self.detailsDialog) {
+                self.selectedItemId(selectedData.id);
+                self.selectedItemNote(selectedData.note);
+                self.selectedItemSpool(selectedData.spool);
+                self.selectedItemUser(selectedData.user);
+
+                self.detailsDialog.modal("show");
+            }
+        };
+
+        self.addUpdateDetails = function(event) {
+            var icon = $(".btn-primary i", self.detailsDialog);
+            icon.addClass("icon-spinner icon-spin");
+
+            var payload = {
+                id: ko.toJS(self.selectedItemId),
+                note: ko.toJS(self.selectedItemNote),
+                spool: ko.toJS(self.selectedItemSpool),
+                user: ko.toJS(self.selectedItemUser)
+            }
+
+            $.ajax({
+                url: "plugin/printhistory/details",
+                type: "PUT",
+                data: JSON.stringify(payload),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: self.closeDetails
+            }).always(function() {
+                icon.removeClass("icon-spinner icon-spin");
+            });
+        };
+
+        self.closeDetails = function() {
+            self.selectedItemId(undefined);
+            self.selectedItemNote(undefined);
+            self.selectedItemSpool(undefined);
+            self.selectedItemUser(undefined);
+
+            self.detailsDialog.modal("hide");
+        };
     }
 
-    ADDITIONAL_VIEWMODELS.push([
-        PrintHistoryViewModel,
-        ["loginStateViewModel", "settingsViewModel"],
-        ["#tab_plugin_printhistory", "#settings_plugin_printhistory"]
-    ]);
+    ADDITIONAL_VIEWMODELS.push({
+        construct: PrintHistoryViewModel,
+        name: "PrintHistoryViewModel",
+        dependencies: ["loginStateViewModel", "settingsViewModel", "usersViewModel"],
+        elements: ["#tab_plugin_printhistory", "#settings_plugin_printhistory"]
+});
 });

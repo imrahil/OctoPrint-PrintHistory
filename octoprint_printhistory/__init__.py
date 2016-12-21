@@ -6,7 +6,7 @@ __author__ = "Jarek Szczepanski <imrahil@imrahil.com>"
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
 __copyright__ = "Copyright (C) 2016 Jarek Szczepanski - Released under terms of the AGPLv3 License"
 
-from flask import jsonify, request
+from flask import jsonify, request, make_response
 from octoprint.server.util.flask import with_revalidation_checking, check_etag
 
 import octoprint.plugin
@@ -34,13 +34,15 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         create_sql = """\
         CREATE TABLE IF NOT EXISTS print_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fileName TEXT,
+            fileName TEXT NOT NULL DEFAULT "",
             note TEXT,
+            spool TEXT NOT NULL DEFAULT "",
             filamentVolume REAL,
             filamentLength REAL,
             printTime REAL,
             success INTEGER,
-            timestamp REAL
+            timestamp REAL,
+            user TEXT NOT NULL DEFAULT ""
         );
 
         CREATE TABLE IF NOT EXISTS modifications (
@@ -65,6 +67,18 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         END;
         """
         cur.executescript(create_sql)
+
+        # migration for existing tables
+        try:
+            cur.execute('ALTER TABLE print_history ADD COLUMN spool TEXT NOT NULL DEFAULT "";')
+        except:
+            pass
+        conn.commit()
+
+        try:
+            cur.execute('ALTER TABLE print_history ADD COLUMN user TEXT NOT NULL DEFAULT "";')
+        except:
+            pass
         conn.commit()
 
         if os.path.exists(old_path):
@@ -115,8 +129,8 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     ##~~ AssetPlugin API
     def get_assets(self):
         return {
-            "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js", "js/jquery.flot.stack.js", "js/bootstrap-editable.min.js", "js/knockout.x-editable.js"],
-            "css": ["css/printhistory.css", "css/bootstrap-editable.css"]
+            "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js", "js/jquery.flot.stack.js"],
+            "css": ["css/printhistory.css"]
         }
 
     #~~ EventPlugin API
@@ -176,18 +190,29 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
         return NO_CONTENT
 
-    @octoprint.plugin.BlueprintPlugin.route("/savenote", methods=["POST"])
+    @octoprint.plugin.BlueprintPlugin.route("/details", methods=["PUT"])
     def saveNote(self):
         from octoprint.server import NO_CONTENT
+        from werkzeug.exceptions import BadRequest
 
-        identifier = int(request.values["pk"])
-        note = request.values["value"]
+        try:
+       		json_data = request.json
+       	except BadRequest:
+       		return make_response("Malformed JSON body in request", 400)
+
+        if not "id" in json_data:
+       		return make_response("No profile included in request", 400)
+
+        identifier = json_data["id"]
+        note = json_data["note"] if "note" in json_data else ""
+        spool = json_data["spool"] if "spool" in json_data else ""
+        user = json_data["user"] if "user" in json_data else ""
 
         self._history_dict = None
 
         conn = sqlite3.connect(self._history_db_path)
         cur  = conn.cursor()
-        cur.execute("UPDATE print_history SET note = ? WHERE id = ?", (note, identifier))
+        cur.execute("UPDATE print_history SET note = ?, spool = ?, user = ? WHERE id = ?", (note, spool, user, identifier))
         conn.commit()
         conn.close()
 

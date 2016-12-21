@@ -13,28 +13,36 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
     </small>
 </div>
 
-<table class="table table-striped table-hover table-condensed table-hover" style="clear: both;">
-    <tr>
-        <th style="width: 38%">Filename</th>
-        <th style="width: 5%; text-align: center;"></th>
-        <th style="width: 22%">Date</th>
-        <th style="width: 15%;text-align: center;">Print time</th>
-        <th style="width: 16%;text-align: center;">Filament usage</th>
-        <th style="width: 4%"></th>
-    </tr>
+<table id="print_history_main_table" class="table table-striped table-hover table-condensed table-hover" style="clear: both;">
+    <thead>
+        <tr>
+            <th style="width: 43%">Filename</th>
+            <th style="width: 4%; text-align: center;"></th>
+            <th style="width: 15%">Date</th>
+            <th style="width: 13%;" class="text-center">Print time</th>
+            <th style="width: 16%;text-align: center;">Filament usage</th>
+            <th style="width: 9%"></th>
+        </tr>
+    </thead>
     <tbody data-bind="foreach: listHelper.paginatedItems">
         <tr>
             <td>
                 <span data-bind="text: fileName, attr: { title: fileName }"></span>
-                <a href="#" class="icon-pencil" data-bind="editable: note, editableOptions: {display: false, pk: id, url: 'plugin/printhistory/savenote', success: $root.requestData, error: function(){alert('Something went wrong. Please try again.')}}, visible: $root.loginState.isUser() && !$root.isPrinting()" title="Add/edit note"></a>
-                <div class="printhistory-note"><small data-bind="text: note"></small></div>
+                <div class="additionalInfo" data-bind="visible: note != '' || spool != '' || user != ''">
+                    <div>Note: <span data-bind="text: note"></span></div>
+                    <div>Spool: <span data-bind="text: spool"></span></div>
+                    <div>User: <span data-bind="text: user"></span></div>
+                </div>
             </td>
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>
             <td data-bind="text: formatDate(timestamp), attr: { title: formatTimeAgo(timestamp) }"></td>
             <td style="text-align: center;" data-bind="text: formatDuration(printTime)"></td>
             <td style="text-align: center;" data-bind="html: filamentUsage"></td>
             <td>
-                <a href="#" class="icon-trash" data-bind="click: function() { if ($root.loginState.isUser() && !$root.isPrinting()) { $root.removeFile($data.id); } else { return; } }, visible: $root.loginState.isUser() && !$root.isPrinting()"></a>
+                <div class="btn-group action-buttons" data-bind="visible: $root.loginState.isUser() && !$root.isPrinting()">
+                    <div class="btn btn-mini" data-bind="click: function() { $root.showDetailsDialog($data); }" title="{{ _('Additional data') }}"><i class="icon-wrench"></i></div>
+                    <div class="btn btn-mini" data-bind="click: function() { $root.removeFile($data.id); }" title="{{ _('Remove') }}"><i class="icon-trash"></i></div>
+                </div>
             </td>
         </tr>
     </tbody>
@@ -59,12 +67,14 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
 </div>
 
 <table class="table table-striped table-hover table-condensed table-hover">
-    <tr>
-        <th style="width: 67%">Total:</th>
-        <th style="width: 13%; text-align: center;" data-bind="text: totalTime"></th>
-        <th style="width: 16%; text-align: center;" data-bind="text: totalUsage"></th>
-        <th style="width: 4%;"></th>
-    </tr>
+    <thead>
+        <tr>
+            <th style="width: 67%">Total:</th>
+            <th style="width: 13%; text-align: center;" data-bind="text: totalTime"></th>
+            <th style="width: 16%; text-align: center;" data-bind="text: totalUsage"></th>
+            <th style="width: 4%;"></th>
+        </tr>
+    </thead>
 </table>
 
 <div>
@@ -91,4 +101,38 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
 -->
 </div>
 <div style="clear: both;"></div>
+
+<div id="printhistory_details_dialog" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Details</h3>
+    </div>
+    <div class="modal-body">
+        <form class="form-horizontal" action="javascript:void(0)">
+            <div class="control-group">
+                <label class="control-label">Note</label>
+                <div class="controls">
+                    <input type="text" data-bind="value: selectedItemNote">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Spool</label>
+                <div class="controls">
+                    <select data-bind="options: spool_inventory, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select spool', value: selectedItemSpool"></select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">User</label>
+                <div class="controls">
+                    <select data-bind="options: users.listHelper.items, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select user', value: selectedItemUser"></select>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Cancel') }}</a>
+        <a href="#" class="btn btn-primary" data-bind="click: addUpdateDetails"><i></i>{{ _('Save') }}</a>
+    </div>
+</div>
+
 
