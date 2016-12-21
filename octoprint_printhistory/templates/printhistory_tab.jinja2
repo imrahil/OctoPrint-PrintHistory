@@ -28,10 +28,10 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
         <tr>
             <td>
                 <span data-bind="text: fileName, attr: { title: fileName }"></span>
-                <div class="additionalInfo" data-bind="visible: note != '' || spool != '' || user != ''">
-                    <div>Note: <span data-bind="text: note"></span></div>
-                    <div>Spool: <span data-bind="text: spool"></span></div>
-                    <div>User: <span data-bind="text: user"></span></div>
+                <div class="additionalInfo">
+                    <div data-bind="visible: note">Note: <span data-bind="text: note"></span></div>
+                    <div data-bind="visible: spool">Spool: <span data-bind="text: spool"></span></div>
+                    <div data-bind="visible: user">User: <span data-bind="text: user"></span></div>
                 </div>
             </td>
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>
@@ -105,7 +105,7 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
 <div id="printhistory_details_dialog" class="modal hide fade">
     <div class="modal-header">
         <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
-        <h3>Details</h3>
+        <h4>Details for <span data-bind="text: selectedItem().fileName"></span></h4>
     </div>
     <div class="modal-body">
         <form class="form-horizontal" action="javascript:void(0)">
@@ -131,7 +131,7 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
     </div>
     <div class="modal-footer">
         <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Cancel') }}</a>
-        <a href="#" class="btn btn-primary" data-bind="click: addUpdateDetails"><i></i>{{ _('Save') }}</a>
+        <a href="#" class="btn btn-primary" data-bind="click: addUpdateDetails"><i></i> {{ _('Save') }}</a>
     </div>
 </div>
 

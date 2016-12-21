@@ -14,10 +14,25 @@ $(function() {
         self.spool_inventory_base = ko.observableArray([]);
         self.availableCurrencies = ko.observableArray(['$', '€', '£']);
 
+        self.selectedItem = ko.observable({fileName: ""});
         self.selectedItemId = ko.observable(undefined);
         self.selectedItemNote = ko.observable(undefined);
         self.selectedItemSpool = ko.observable(undefined);
         self.selectedItemUser = ko.observable(undefined);
+
+        self.selectedItem.subscribe(function(newValue) {
+            if (newValue === undefined) {
+                self.selectedItemId(undefined);
+                self.selectedItemNote(undefined);
+                self.selectedItemSpool(undefined);
+                self.selectedItemUser(undefined);
+            } else {
+                self.selectedItemId(newValue.id);
+                self.selectedItemNote(newValue.note);
+                self.selectedItemSpool(newValue.spool);
+                self.selectedItemUser(newValue.user);
+            }
+        });
 
         self.onHistoryTab = false;
         self.dataIsStale = true;
@@ -409,10 +424,7 @@ $(function() {
 
         self.showDetailsDialog = function(selectedData) {
             if (self.detailsDialog) {
-                self.selectedItemId(selectedData.id);
-                self.selectedItemNote(selectedData.note);
-                self.selectedItemSpool(selectedData.spool);
-                self.selectedItemUser(selectedData.user);
+                self.selectedItem(selectedData);
 
                 self.detailsDialog.modal("show");
             }
@@ -441,11 +453,10 @@ $(function() {
             });
         };
 
-        self.closeDetails = function() {
-            self.selectedItemId(undefined);
-            self.selectedItemNote(undefined);
-            self.selectedItemSpool(undefined);
-            self.selectedItemUser(undefined);
+        self.closeDetails = function(data) {
+            self.fromResponse(data);
+
+            self.selectedItem(undefined);
 
             self.detailsDialog.modal("hide");
         };

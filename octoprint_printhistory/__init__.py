@@ -192,7 +192,6 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
     @octoprint.plugin.BlueprintPlugin.route("/details", methods=["PUT"])
     def saveNote(self):
-        from octoprint.server import NO_CONTENT
         from werkzeug.exceptions import BadRequest
 
         try:
@@ -216,7 +215,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         conn.commit()
         conn.close()
 
-        return NO_CONTENT
+        return self.getHistoryData()
 
     @octoprint.plugin.BlueprintPlugin.route("/export/<string:exportType>", methods=["GET"])
     def exportHistoryData(self, exportType):
