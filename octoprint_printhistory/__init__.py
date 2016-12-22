@@ -144,6 +144,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
         force = request.values.get("force", "false") in valid_boolean_trues
 
+        if force:
+            self._history_dict = None
+
         def view():
             history_dict = self._getHistoryDict()
 
