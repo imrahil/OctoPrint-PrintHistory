@@ -205,12 +205,14 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         spool = json_data["spool"] if "spool" in json_data else ""
         user = json_data["user"] if "user" in json_data else ""
         success = json_data["success"]
+        filamentLength = json_data["filamentLength"] if "filamentLength" in json_data else 0
+        filamentVolume = json_data["filamentVolume"] if "filamentVolume" in json_data else 0
 
         self._history_dict = None
 
         conn = sqlite3.connect(self._history_db_path)
         cur  = conn.cursor()
-        cur.execute("UPDATE print_history SET note = ?, spool = ?, user = ?, success = ? WHERE id = ?", (note, spool, user, success, identifier))
+        cur.execute("UPDATE print_history SET note = ?, spool = ?, user = ?, success = ?, filamentLength = ?, filamentVolume = ? WHERE id = ?", (note, spool, user, success, filamentLength, filamentVolume, identifier))
         conn.commit()
         conn.close()
 

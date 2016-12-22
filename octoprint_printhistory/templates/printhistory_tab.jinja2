@@ -110,27 +110,45 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
     <div class="modal-body" data-bind="with: itemForEditing">
         <form class="form-horizontal" action="javascript:void(0)">
             <div class="control-group">
-                <label class="control-label">Note</label>
+                <label class="control-label">Note:</label>
                 <div class="controls">
                     <input type="text" data-bind="value: note">
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">Spool</label>
+                <label class="control-label">Spool:</label>
                 <div class="controls">
                     <select data-bind="options: $parent.spool_inventory, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select spool', value: spool"></select>
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">User</label>
+                <label class="control-label">User:</label>
                 <div class="controls">
                     <select data-bind="options: $parent.users.listHelper.items, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select user', value: user"></select>
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">Success</label>
+                <label class="control-label">Success:</label>
                 <div class="controls">
                     <input type="checkbox" data-bind="checked: success" />
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Filament length:</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="text" data-bind="value: filamentLength">
+                        <span class="add-on">mm</span>
+                    </div>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Filament volume:</label>
+                <div class="controls">
+                    <div class="input-append">
+                        <input type="text" data-bind="value: filamentVolume">
+                        <span class="add-on">cm³</span>
+                    </div>
                 </div>
             </div>
         </form>

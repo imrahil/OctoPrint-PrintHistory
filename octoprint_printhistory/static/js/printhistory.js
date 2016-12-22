@@ -353,7 +353,9 @@ $(function() {
                 note: self.itemForEditing().note(),
                 spool: self.itemForEditing().spool(),
                 user: self.itemForEditing().user(),
-                success: self.itemForEditing().success()
+                success: self.itemForEditing().success(),
+                filamentLength: self.itemForEditing().filamentLength(),
+                filamentVolume: self.itemForEditing().filamentVolume()
             }
 
             $.ajax({
