@@ -125,6 +125,8 @@ $(function() {
                 return new HistoryItem(data);
             });
 
+            self.pureData = data.history;
+
             self.dataIsStale = false;
             self.listHelper.updateItems(dataRows);
             self.updatePlots();
@@ -260,7 +262,7 @@ $(function() {
             _.each(_.keys(self.pureData), function(key) {
                 var day = moment.unix(self.pureData[key].timestamp).hour(0).minute(0).second(0).millisecond(0).valueOf();
 
-                if (self.pureData[key].success == true) {
+                if (self.pureData[key].success == 1) {
                     successCount += 1;
 
                     if (!agreggateSuccess.hasOwnProperty(day)) {
