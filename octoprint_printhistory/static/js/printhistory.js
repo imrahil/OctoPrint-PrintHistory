@@ -8,6 +8,9 @@ $(function() {
 
         self.totalTime = ko.observable();
         self.totalUsage = ko.observable();
+        self.averageTime = ko.observable();
+        self.averageUsage = ko.observable();
+
         self.isPrinting = ko.observable(undefined);
 
         self.spool_inventory = ko.observableArray([]);
@@ -419,11 +422,17 @@ $(function() {
                 }
             },
             {
+                "all": function (item) {
+                    return true;
+                },
                 "successful": function (item) {
                     return (item.success() == 1);
+                },
+                "failed": function (item) {
+                    return (item.success() == 0);
                 }
             },
-            "timestamp", [], ["successful"], 10
+            "timestamp", ["all"], [["all", "successful", "failed"]], 10
         );
 
         self.listHelper.items.subscribe(function(newValue) {
@@ -432,9 +441,14 @@ $(function() {
                 length: 0,
                 volume: 0
             };
+            var averageUsage = {
+                length: 0,
+                volume: 0
+            };
 
             var itemList = newValue;
-            for (var i = 0; i < itemList.length; i++) {
+            var itemListLength = itemList.length;
+            for (var i = 0; i < itemListLength; i++) {
                 totalTime += itemList[i].printTime();
 
                 totalUsage.length += itemList[i].filamentLength();
@@ -443,6 +457,12 @@ $(function() {
 
             self.totalTime(formatDuration(totalTime));
             self.totalUsage(formatFilament(totalUsage));
+
+            averageUsage.length = totalUsage.length / itemListLength;
+            averageUsage.volume = totalUsage.volume / itemListLength;
+
+            self.averageTime(formatDuration(totalTime / itemListLength));
+            self.averageUsage(formatFilament(averageUsage));
         });
 
         self.fileNameSort = function() {
