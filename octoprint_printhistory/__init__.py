@@ -178,8 +178,6 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
     @octoprint.plugin.BlueprintPlugin.route("/history/<int:identifier>", methods=["DELETE"])
     def deleteHistoryData(self, identifier):
-        from octoprint.server import NO_CONTENT
-
         self._history_dict = None
 
         conn = sqlite3.connect(self._history_db_path)
@@ -188,7 +186,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         conn.commit()
         conn.close()
 
-        return NO_CONTENT
+        return self.getHistoryData()
 
     @octoprint.plugin.BlueprintPlugin.route("/details", methods=["PUT"])
     def saveNote(self):
@@ -206,12 +204,13 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         note = json_data["note"] if "note" in json_data else ""
         spool = json_data["spool"] if "spool" in json_data else ""
         user = json_data["user"] if "user" in json_data else ""
+        success = json_data["success"]
 
         self._history_dict = None
 
         conn = sqlite3.connect(self._history_db_path)
         cur  = conn.cursor()
-        cur.execute("UPDATE print_history SET note = ?, spool = ?, user = ? WHERE id = ?", (note, spool, user, identifier))
+        cur.execute("UPDATE print_history SET note = ?, spool = ?, user = ?, success = ? WHERE id = ?", (note, spool, user, success, identifier))
         conn.commit()
         conn.close()
 

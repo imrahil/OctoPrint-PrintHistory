@@ -34,9 +34,9 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
                     <div data-bind="visible: user">User: <span data-bind="text: user"></span></div>
                 </div>
             </td>
-            <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success == true, 'icon-exclamation-sign' : success == false}, style: { color: success == true ? 'green' : 'red' }"></span></td>
-            <td data-bind="text: formatDate(timestamp), attr: { title: formatTimeAgo(timestamp) }"></td>
-            <td style="text-align: center;" data-bind="text: formatDuration(printTime)"></td>
+            <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success() == 1, 'icon-exclamation-sign' : success() == 0}, style: { color: success() == 1 ? 'green' : 'red' }"></span></td>
+            <td data-bind="text: formatedDate, attr: { title: formatedTimeAgo }"></td>
+            <td style="text-align: center;" data-bind="text: formatedDuration"></td>
             <td style="text-align: center;" data-bind="html: filamentUsage"></td>
             <td>
                 <div class="btn-group action-buttons" data-bind="visible: $root.loginState.isUser() && !$root.isPrinting()">
@@ -105,26 +105,32 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
 <div id="printhistory_details_dialog" class="modal hide fade">
     <div class="modal-header">
         <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
-        <h4>Details for <span data-bind="text: selectedItem().fileName"></span></h4>
+        <h4 data-bind="with: itemForEditing">Details for <span data-bind="text: fileName"></span></h4>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" data-bind="with: itemForEditing">
         <form class="form-horizontal" action="javascript:void(0)">
             <div class="control-group">
                 <label class="control-label">Note</label>
                 <div class="controls">
-                    <input type="text" data-bind="value: selectedItemNote">
+                    <input type="text" data-bind="value: note">
                 </div>
             </div>
             <div class="control-group">
                 <label class="control-label">Spool</label>
                 <div class="controls">
-                    <select data-bind="options: spool_inventory, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select spool', value: selectedItemSpool"></select>
+                    <select data-bind="options: $parent.spool_inventory, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select spool', value: spool"></select>
                 </div>
             </div>
             <div class="control-group">
                 <label class="control-label">User</label>
                 <div class="controls">
-                    <select data-bind="options: users.listHelper.items, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select user', value: selectedItemUser"></select>
+                    <select data-bind="options: $parent.users.listHelper.items, optionsText: 'name', optionsValue: 'name', optionsCaption: 'Select user', value: user"></select>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Success</label>
+                <div class="controls">
+                    <input type="checkbox" data-bind="checked: success" />
                 </div>
             </div>
         </form>

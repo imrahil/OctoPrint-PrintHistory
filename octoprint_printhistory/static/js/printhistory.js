@@ -14,25 +14,51 @@ $(function() {
         self.spool_inventory_base = ko.observableArray([]);
         self.availableCurrencies = ko.observableArray(['$', '€', '£']);
 
-        self.selectedItem = ko.observable({fileName: ""});
-        self.selectedItemId = ko.observable(undefined);
-        self.selectedItemNote = ko.observable(undefined);
-        self.selectedItemSpool = ko.observable(undefined);
-        self.selectedItemUser = ko.observable(undefined);
+        self.itemForEditing = ko.observable();
 
-        self.selectedItem.subscribe(function(newValue) {
-            if (newValue === undefined) {
-                self.selectedItemId(undefined);
-                self.selectedItemNote(undefined);
-                self.selectedItemSpool(undefined);
-                self.selectedItemUser(undefined);
-            } else {
-                self.selectedItemId(newValue.id);
-                self.selectedItemNote(newValue.note);
-                self.selectedItemSpool(newValue.spool);
-                self.selectedItemUser(newValue.user);
-            }
-        });
+        var HistoryItem = function(data) {
+            this.id = ko.observable();
+            this.fileName = ko.observable();
+            this.success = ko.observable();
+            this.filamentVolume = ko.observable();
+            this.filamentLength = ko.observable();
+            this.timestamp = ko.observable();
+            this.printTime = ko.observable();
+            this.note = ko.observable();
+            this.spool = ko.observable();
+            this.user = ko.observable();
+
+            this.successful = ko.computed(function() {
+                return this.success() == 1;
+            }, this);
+            this.filamentUsage = ko.computed(self.formatFilament, this);
+            this.formatedDate = ko.computed(function () {
+                return formatDate(this.timestamp());
+            }, this);
+            this.formatedTimeAgo = ko.computed(function () {
+                return formatTimeAgo(this.timestamp());
+            }, this);
+            this.formatedDuration = ko.computed(function () {
+                return formatDuration(this.printTime());
+            }, this);
+
+            this.update(data);
+        }
+
+        HistoryItem.prototype.update = function (data) {
+            var updateData = data || {}
+
+            this.id(updateData.id);
+            this.fileName(updateData.fileName);
+            this.success(updateData.success);
+            this.filamentVolume(updateData.filamentVolume || 0);
+            this.filamentLength(updateData.filamentLength || 0);
+            this.timestamp(updateData.timestamp || 0);
+            this.printTime(updateData.printTime || 0);
+            this.note(updateData.note || "");
+            this.spool(updateData.spool || "");
+            this.user(updateData.user || "");
+        };
 
         self.onHistoryTab = false;
         self.dataIsStale = true;
@@ -42,6 +68,7 @@ $(function() {
 
         self.onStartup = function () {
             self.detailsDialog = $("#printhistory_details_dialog");
+            self.detailsDialog.on('hidden', self.onCancelDetails);
         }
 
         self.onBeforeBinding = function () {
@@ -50,100 +77,10 @@ $(function() {
             self.spool_inventory_base(self.settings.spool_inventory);
         };
 
-        self.listHelper = new ItemListHelper(
-            "historyItems",
-            {
-                "fileNameAsc": function (a, b) {
-                    // sorts ascending
-                    if (a["fileName"].toLocaleLowerCase() < b["fileName"].toLocaleLowerCase()) return -1;
-                    if (a["fileName"].toLocaleLowerCase() > b["fileName"].toLocaleLowerCase()) return 1;
-                    return 0;
-                },
-                "fileNameDesc": function (a, b) {
-                    // sorts ascending
-                    if (a["fileName"].toLocaleLowerCase() < b["fileName"].toLocaleLowerCase()) return 1;
-                    if (a["fileName"].toLocaleLowerCase() > b["fileName"].toLocaleLowerCase()) return -1;
-                    return 0;
-                },
-                "timestampAsc": function(a, b) {
-                    // sorts descending
-                    if (a["timestamp"] > b["timestamp"]) return 1;
-                    if (a["timestamp"] < b["timestamp"]) return -1;
-                    return 0;
-                },
-                "timestampDesc": function(a, b) {
-                    // sorts descending
-                    if (a["timestamp"] > b["timestamp"]) return -1;
-                    if (a["timestamp"] < b["timestamp"]) return 1;
-                    return 0;
-                },
-                "printTimeAsc": function(a, b) {
-                    // sorts descending
-                    if (typeof (a["printTime"]) === 'undefined') return 1;
-                    if (typeof (b["printTime"]) === 'undefined') return 0;
-
-                    if (a["printTime"] > b["printTime"]) return 1;
-                    if (a["printTime"] < b["printTime"]) return -1;
-                    return 0;
-                },
-                "printTimeDesc": function(a, b) {
-                    // sorts descending
-                    if (typeof (a["printTime"]) === 'undefined') return 1;
-                    if (typeof (b["printTime"]) === 'undefined') return 0;
-
-                    if (a["printTime"] > b["printTime"]) return -1;
-                    if (a["printTime"] < b["printTime"]) return 1;
-                    return 0;
-                }
-            },
-            {
-                "successful": function(file) {
-                    return (file["success"] == true);
-                }
-            },
-            "timestamp",
-            [],
-            ["successful"],
-            10
-        );
-
-        self.fileNameSort = function() {
-            if (self.listHelper.currentSorting() == "fileNameAsc") {
-                self.listHelper.changeSorting("fileNameDesc");
-            } else {
-                self.listHelper.changeSorting("fileNameAsc");
-            }
-        };
-
-        self.timeStampSort = function() {
-            if (self.listHelper.currentSorting() == "timestampDesc") {
-                self.listHelper.changeSorting("timestampAsc");
-            } else {
-                self.listHelper.changeSorting("timestampDesc");
-            }
-        };
-
-        self.printTimeSort = function() {
-            if (self.listHelper.currentSorting() == "printTimeDesc") {
-                self.listHelper.changeSorting("printTimeAsc");
-            } else {
-                self.listHelper.changeSorting("printTimeDesc");
-            }
-        };
-
-        self.sortOrder = function(orderType) {
-            var order = "";
-
-            if (orderType == "fileName") {
-                order = (self.listHelper.currentSorting() == 'fileNameAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'fileNameDesc') ? '(' + _('descending') + ')' : '';
-            } else if (orderType == "timestamp") {
-                order = (self.listHelper.currentSorting() == 'timestampAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'timestampDesc') ? '(' + _('descending') + ')' : '';
-            } else {
-                order = (self.listHelper.currentSorting() == 'printTimeAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'printTimeDesc') ? '(' + _('descending') + ')' : '';
-            }
-
-            return order;
-        };
+        self.onAfterTabChange = function(current, previous) {
+            self.onHistoryTab = current == "#tab_plugin_printhistory"
+            self.updatePlots();
+        }
 
         self.fromCurrentData = function (data) {
             var isPrinting = data.state.flags.printing;
@@ -153,17 +90,6 @@ $(function() {
             }
 
             self.isPrinting(isPrinting);
-        };
-
-        self.removeFile = function(id) {
-            //console.log('PrintHistory - remove file: ' + id);
-
-            $.ajax({
-                url: "plugin/printhistory/history/" + id,
-                type: "DELETE",
-                dataType: "json",
-                success: self.requestData
-            });
         };
 
         self.requestData = function(params) {
@@ -189,69 +115,44 @@ $(function() {
                 data: {force: force},
                 dataType: "json",
                 success: self.fromResponse
-            }).always(function() { self.requestingData = false; });
+            }).always(function () {
+                self.requestingData = false;
+            });
         };
 
         self.fromResponse = function(data) {
-            //console.log('Callback - data: ' + data);
-
-            var dataRows = [];
-            self.pureData = data.history;
-            var totalTime = 0;
-            var totalUsage = {};
-
-            totalUsage["length"] = 0;
-            totalUsage["volume"] = 0;
-
-            _.each(_.keys(self.pureData), function(key) {
-                dataRows.push({
-                    id: self.pureData[key].id,
-                    fileName: self.pureData[key].fileName,
-                    success: (self.pureData[key].success == 1),
-                    filamentUsage: self.formatFilament(self.pureData[key]),
-                    timestamp: (self.pureData[key].timestamp != null) ? self.pureData[key].timestamp : "",
-                    printTime: (self.pureData[key].printTime != null) ? self.pureData[key].printTime : "",
-                    note: (self.pureData[key].note != null) ? self.pureData[key].note : "",
-                    spool: (self.pureData[key].spool != null) ? self.pureData[key].spool : "",
-                    user: (self.pureData[key].user != null) ? self.pureData[key].user : ""
-                });
-
-                totalTime += (self.pureData[key].printTime !== undefined) ? self.pureData[key].printTime : 0;
-                if (self.pureData[key].success == true) {
-                    if (self.pureData[key].hasOwnProperty('filamentLength')) {
-                        totalUsage["length"] += self.pureData[key].filamentLength;
-                        totalUsage["volume"] += self.pureData[key].filamentVolume;
-                    }
-
-                    if (self.pureData[key].hasOwnProperty('filamentLength2')) {
-                        totalUsage["length"] += self.pureData[key].filamentLength2;
-                        totalUsage["volume"] += self.pureData[key].filamentVolume2;
-                    }
-                }
+            var dataRows = ko.utils.arrayMap(data.history, function (data) {
+                return new HistoryItem(data);
             });
 
             self.dataIsStale = false;
-
-            self.totalTime(formatDuration(totalTime));
-            self.totalUsage(formatFilament(totalUsage));
-
             self.listHelper.updateItems(dataRows);
-
             self.updatePlots();
         };
 
-        self.formatFilament = function(data) {
+        self.removeFile = function(id) {
+            $.ajax({
+                url: "plugin/printhistory/history/" + id(),
+                type: "DELETE",
+                dataType: "json",
+                success: function(data) {
+                    self.fromResponse(data);
+                }
+            });
+        };
+
+        self.formatFilament = function() {
             var tool0 = "";
             var tool1 = "";
             var output = "";
 
-            if (data.hasOwnProperty('filamentLength') && data.filamentLength != 0) {
-                tool0 += formatFilament({length: data.filamentLength, volume: data.filamentVolume});
+            if (this.filamentLength() != undefined) {
+                tool0 += formatFilament({length: this.filamentLength(), volume: this.filamentVolume()});
             }
 
-            if (data.hasOwnProperty('filamentLength2') && data.filamentLength2 != 0) {
-                tool1 += formatFilament({length: data.filamentLength2, volume: data.filamentVolume2});
-            }
+            //if (data.hasOwnProperty('filamentLength2') && data.filamentLength2 != 0) {
+            //    tool1 += formatFilament({length: data.filamentLength2, volume: data.filamentVolume2});
+            //}
 
             if (tool0 !== "" && tool1 !== "") {
                 output = "Tool0: " + tool0 + "<br>Tool1: " + tool1;
@@ -401,11 +302,11 @@ $(function() {
             $.plot(success_graph, success_data, successGraphOptions);
         };
 
-        self.onAfterTabChange = function(current, previous) {
-            self.onHistoryTab = current == "#tab_plugin_printhistory"
-            self.updatePlots();
-        }
-
+        /*
+         * -----------
+         *  SETTINGS
+         * -----------
+         */
         self.addNewSpool = function() {
             self.spool_inventory.push({name: "New", price:0, currency: "$"});
         };
@@ -422,23 +323,35 @@ $(function() {
             self.global_settings.settings.plugins.printhistory.spool_inventory(self.spool_inventory.slice(0));
         }
 
+        /*
+         * -----------
+         *   DETAILS
+         * -----------
+         */
         self.showDetailsDialog = function(selectedData) {
             if (self.detailsDialog) {
-                self.selectedItem(selectedData);
+                self.itemForEditing(new HistoryItem(ko.mapping.toJS(selectedData)));
 
                 self.detailsDialog.modal("show");
             }
         };
+
+        self.onCancelDetails = function (event) {
+            if (event.target.id == "printhistory_details_dialog") {
+                self.itemForEditing(null);
+            }
+        }
 
         self.addUpdateDetails = function(event) {
             var icon = $(".btn-primary i", self.detailsDialog);
             icon.addClass("icon-spinner icon-spin");
 
             var payload = {
-                id: ko.toJS(self.selectedItemId),
-                note: ko.toJS(self.selectedItemNote),
-                spool: ko.toJS(self.selectedItemSpool),
-                user: ko.toJS(self.selectedItemUser)
+                id: self.itemForEditing().id(),
+                note: self.itemForEditing().note(),
+                spool: self.itemForEditing().spool(),
+                user: self.itemForEditing().user(),
+                success: self.itemForEditing().success()
             }
 
             $.ajax({
@@ -456,9 +369,114 @@ $(function() {
         self.closeDetails = function(data) {
             self.fromResponse(data);
 
-            self.selectedItem(undefined);
+            self.listHelper.selectNone();
 
             self.detailsDialog.modal("hide");
+        };
+
+        self.listHelper = new ItemListHelper(
+            "historyItems",
+            {
+                "fileNameAsc": function (a, b) {
+                    // sorts ascending
+                    if (a.fileName().toLocaleLowerCase() < b.fileName().toLocaleLowerCase()) return -1;
+                    if (a.fileName().toLocaleLowerCase() > b.fileName().toLocaleLowerCase()) return 1;
+                    return 0;
+                },
+                "fileNameDesc": function (a, b) {
+                    // sorts ascending
+                    if (a.fileName().toLocaleLowerCase() < b.fileName().toLocaleLowerCase()) return 1;
+                    if (a.fileName().toLocaleLowerCase() > b.fileName().toLocaleLowerCase()) return -1;
+                    return 0;
+                },
+                "timestampAsc": function (a, b) {
+                    // sorts descending
+                    if (a.timestamp() > b.timestamp()) return 1;
+                    if (a.timestamp() < b.timestamp()) return -1;
+                    return 0;
+                },
+                "timestampDesc": function (a, b) {
+                    // sorts descending
+                    if (a.timestamp() > b.timestamp()) return -1;
+                    if (a.timestamp() < b.timestamp()) return 1;
+                    return 0;
+                },
+                "printTimeAsc": function (a, b) {
+                    // sorts descending
+                    if (a.printTime() > b.printTime()) return 1;
+                    if (a.printTime() < b.printTime()) return -1;
+                    return 0;
+                },
+                "printTimeDesc": function (a, b) {
+                    // sorts descending
+                    if (a.printTime() > b.printTime()) return -1;
+                    if (a.printTime() < b.printTime()) return 1;
+                    return 0;
+                }
+            },
+            {
+                "successful": function (item) {
+                    return (item.success() == 1);
+                }
+            },
+            "timestamp", [], ["successful"], 10
+        );
+
+        self.listHelper.items.subscribe(function(newValue) {
+            var totalTime = 0;
+            var totalUsage = {
+                length: 0,
+                volume: 0
+            };
+
+            var itemList = newValue;
+            for (var i = 0; i < itemList.length; i++) {
+                totalTime += itemList[i].printTime();
+
+                totalUsage.length += itemList[i].filamentLength();
+                totalUsage.volume += itemList[i].filamentVolume();
+            }
+
+            self.totalTime(formatDuration(totalTime));
+            self.totalUsage(formatFilament(totalUsage));
+        });
+
+        self.fileNameSort = function() {
+            if (self.listHelper.currentSorting() == "fileNameAsc") {
+                self.listHelper.changeSorting("fileNameDesc");
+            } else {
+                self.listHelper.changeSorting("fileNameAsc");
+            }
+        };
+
+        self.timeStampSort = function() {
+            if (self.listHelper.currentSorting() == "timestampDesc") {
+                self.listHelper.changeSorting("timestampAsc");
+            } else {
+                self.listHelper.changeSorting("timestampDesc");
+            }
+        };
+
+        self.printTimeSort = function() {
+            if (self.listHelper.currentSorting() == "printTimeDesc") {
+                self.listHelper.changeSorting("printTimeAsc");
+            } else {
+                self.listHelper.changeSorting("printTimeDesc");
+            }
+        };
+
+        self.sortOrder = function(orderType) {
+            var order = "";
+
+            if (orderType == "fileName") {
+                order = (self.listHelper.currentSorting() == 'fileNameAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'fileNameDesc') ? '(' + _('descending') + ')' : '';
+            } else if (orderType == "timestamp") {
+                order = (self.listHelper.currentSorting() == 'timestampAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'timestampDesc') ? '(' + _('descending') + ')' : '';
+            } else {
+                order = (self.listHelper.currentSorting() == 'printTimeAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'printTimeDesc') ? '(' + _('descending') + ')' : '';
+            }
+
+            return order;
         };
     }
 
