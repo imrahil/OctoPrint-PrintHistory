@@ -52,15 +52,15 @@ def eventHandler(self, event, payload):
                         filamentVolume = fileData["analysis"]["filament"]["tool0"]["volume"]
                         filamentLength = fileData["analysis"]["filament"]["tool0"]['length']
 
-                        currentFile["filamentVolume"] = filamentVolume
-                        currentFile["filamentLength"] = filamentLength
+                        currentFile["filamentVolume"] = filamentVolume if filamentVolume is not None else 0
+                        currentFile["filamentLength"] = filamentLength if filamentLength is not None else 0
 
                     if "tool1" in fileData["analysis"]["filament"]:
                         filamentVolume = fileData["analysis"]["filament"]["tool1"]["volume"]
                         filamentLength = fileData["analysis"]["filament"]["tool1"]['length']
 
-                        currentFile["filamentVolume2"] = filamentVolume
-                        currentFile["filamentLength2"] = filamentLength
+                        currentFile["filamentVolume2"] = filamentVolume if filamentVolume is not None else 0
+                        currentFile["filamentLength2"] = filamentLength if filamentLength is not None else 0
 
                     estimatedPrintTime = fileData["analysis"]["estimatedPrintTime"] if "estimatedPrintTime" in fileData["analysis"] else 0
 

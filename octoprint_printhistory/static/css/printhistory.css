@@ -25,3 +25,15 @@
     font-size: 85%;
     color: #999;
 }
+
+#tab_plugin_printhistory .summary {
+    margin-bottom: 5px;
+}
+
+#tab_plugin_printhistory .summary th {
+    font-weight: bold;
+    border-top: 1px solid #ddd;
+    background-color: #f9f9f9;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
