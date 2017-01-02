@@ -75,8 +75,8 @@ def eventHandler(self, event, payload):
             if "time" in payload:
                 currentFile["printTime"] = payload["time"]
             else:
-                printTime = self._comm.getPrintTime()
-                currentFile["printTime"] = printTime if printTime is not None else ""
+                printTime = self._comm.getPrintTime() if self._comm is not None else ""
+                currentFile["printTime"] = printTime
 
 
             # when print happened and what was the result
