@@ -58,7 +58,7 @@ def exportHistoryData(self, exportType):
 
             response = flask.make_response(si.getvalue())
             response.headers["Content-type"] = "application/vnd.ms-excel"
-            response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.xls"
+            response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.xlsx"
 
         return response
     else:
