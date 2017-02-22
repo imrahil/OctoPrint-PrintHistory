@@ -6,8 +6,10 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 
 def eventHandler(self, event, payload):
     from octoprint.events import Events
+    import json
     import time
     from operator import itemgetter
+    from .parser import UniversalParser
 
     import sqlite3
 
@@ -40,9 +42,12 @@ def eventHandler(self, event, payload):
             success = None
             estimatedPrintTime = 0
 
+            gcode_parser = UniversalParser(payload["file"])
+            parameters = gcode_parser.parse()
             currentFile = {
                 "fileName": fileName,
-                "note": ""
+                "note": "",
+                "parameters": json.dumps(parameters)
             }
 
             # analysis - looking for info about filament usage
@@ -102,7 +107,7 @@ def eventHandler(self, event, payload):
 
             conn = sqlite3.connect(self._history_db_path)
             cur  = conn.cursor()
-            cur.execute("INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp) VALUES (:fileName, :note, :filamentVolume, :filamentLength, :printTime, :success, :timestamp)", currentFile)
+            cur.execute("INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp, parameters) VALUES (:fileName, :note, :filamentVolume, :filamentLength, :printTime, :success, :timestamp, :parameters)", currentFile)
             conn.commit()
             conn.close()
 

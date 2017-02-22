@@ -10,8 +10,8 @@ from flask import jsonify, request, make_response
 from octoprint.server.util.flask import with_revalidation_checking, check_etag
 
 import octoprint.plugin
-
 import sqlite3
+
 
 class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                          octoprint.plugin.EventHandlerPlugin,
@@ -42,7 +42,8 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             printTime REAL,
             success INTEGER,
             timestamp REAL,
-            user TEXT NOT NULL DEFAULT ""
+            user TEXT NOT NULL DEFAULT "",
+            parameters TEXT NOT NULL DEFAULT ""
         );
 
         CREATE TABLE IF NOT EXISTS modifications (
@@ -77,6 +78,12 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
         try:
             cur.execute('ALTER TABLE print_history ADD COLUMN user TEXT NOT NULL DEFAULT "";')
+        except:
+            pass
+        conn.commit()
+
+        try:
+            cur.execute('ALTER TABLE print_history ADD COLUMN parameters TEXT NOT NULL DEFAULT "";')
         except:
             pass
         conn.commit()
