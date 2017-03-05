@@ -44,9 +44,9 @@ class CuraParser(BaseParser):
 
     def detect(self, gcode_file):
         detected = False
-        # on the third line
+        # on the third line (not always)
         # ;Generated with Cura_SteamEngine 2.3.1
-        for _ in range(3):
+        for _ in range(10):
             line = gcode_file.readline()
             if re.search(r"Cura_SteamEngine", line):
                 detected = True
