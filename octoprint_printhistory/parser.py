@@ -2,6 +2,7 @@
 import re
 import os
 import io
+import logging
 import unittest
 import ConfigParser
 
@@ -10,11 +11,12 @@ BUFFER_SIZE = 8192
 
 
 class UniversalParser:
-    def __init__(self, file_path):
+    def __init__(self, file_path, logger=None):
         self.parser_factory = None
         self.name = None
         self.version = None
         self.file = open(file_path, "r")
+        self._logger = logger if logger else logging.getLogger(__name__)
         for parser in [CuraParser(), Slic3rParser(), Simplify3DParser()]:
             if parser.detect(self.file):
                 self.parser_factory = parser
@@ -22,9 +24,13 @@ class UniversalParser:
                 self.version = parser.version
 
     def parse(self):
-        parameters = self.parser_factory.parse(self.file)
-        parameters.update({"slicer_name": self.name})
-        parameters.update({"slicer_version": self.version})
+        if self.parser_factory:
+            parameters = self.parser_factory.parse(self.file)
+            parameters.update({"slicer_name": self.name})
+            parameters.update({"slicer_version": self.version})
+        else:
+            parameters = {}
+            self._logger.info("Can't parse additional parameters from %s" % self.file.name)
         return parameters
 
 
