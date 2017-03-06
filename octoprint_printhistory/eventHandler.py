@@ -42,7 +42,7 @@ def eventHandler(self, event, payload):
             success = None
             estimatedPrintTime = 0
 
-            gcode_parser = UniversalParser(payload["file"])
+            gcode_parser = UniversalParser(payload["file"], logger=self._logger)
             parameters = gcode_parser.parse()
             currentFile = {
                 "fileName": fileName,
