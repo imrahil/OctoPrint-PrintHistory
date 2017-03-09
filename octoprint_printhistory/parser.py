@@ -92,6 +92,8 @@ class CuraParser(BaseParser):
             for section in ["values", "metadata"]:
                 for option in config.options(section):
                     parameters.update({option: config.get(section, option)})
+        except ConfigParser.NoSectionError:
+            pass
         except ConfigParser.NoOptionError:
             pass
         return parameters
