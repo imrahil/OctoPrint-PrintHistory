@@ -6,7 +6,7 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 
 def exportHistoryData(self, exportType):
     import flask
-    import csv
+    import unicodecsv as csv
     import StringIO
     import re
     from utils import namedtuple_with_defaults, prepare_dict, load_json, rename_duplicates
@@ -19,7 +19,7 @@ def exportHistoryData(self, exportType):
         headers = ['File name', 'Timestamp', 'Success', 'Print time', 'Filament length', 'Filament volume']
         fields = ['fileName', 'timestamp', 'success', 'printTime', 'filamentLength', 'filamentVolume']
         if exportType == 'csv':
-            writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+            writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
             writer.writerow(headers)
 
             for historyDetails in history_dict:
@@ -50,7 +50,7 @@ def exportHistoryData(self, exportType):
             csv_header = rearranged_header
 
             ParametersRow = namedtuple_with_defaults('TableRow', csv_header)
-            writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+            writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
             writer.writerow(csv_header)
             for historyDetails in history_dict:
                 parameters = load_json(historyDetails, "parameters")
