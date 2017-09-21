@@ -16,8 +16,8 @@ def exportHistoryData(self, exportType):
     if history_dict is not None:
         si = StringIO.StringIO()
 
-        headers = ['File name', 'Timestamp', 'Success', 'Print time', 'Filament length', 'Filament volume']
-        fields = ['fileName', 'timestamp', 'success', 'printTime', 'filamentLength', 'filamentVolume']
+        headers = ['File name', 'Timestamp', 'Success', 'Print time', 'Spool', 'Filament length', 'Filament volume', 'User']
+        fields = ['fileName', 'timestamp', 'success', 'printTime', 'spool', 'filamentLength', 'filamentVolume', 'user']
         if exportType == 'csv':
             writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
             writer.writerow(headers)
@@ -33,8 +33,8 @@ def exportHistoryData(self, exportType):
             response.headers["Content-type"] = "text/csv"
             response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.csv"
         elif exportType == 'csv_extra':
-            fields = ["fileName", "timestamp", "success", "printTime", "filamentLength", "filamentVolume"]
-            unused_fields = ["spool", "user", "note", "id", "parameters"]
+            fields = ['fileName', 'timestamp', 'success', 'printTime', 'spool', 'filamentLength', 'filamentVolume', 'user']
+            unused_fields = ["note", "id", "parameters"]
             csv_header = set(fields)
 
             for historyDetails in history_dict:
