@@ -25,8 +25,13 @@ def exportHistoryData(self, exportType):
             for historyDetails in history_dict:
                 output = list()
                 for field in fields:
-                    value = historyDetails.get(field, '-')
-                    output.append(value if value is not None else '-')
+                   value = historyDetails.get(field, '-')
+                   if field == "timestamp":
+                      output.append(formatTimestamp(value))
+                   elif field == "printTime":
+                      output.append(formatPrintTime(value))
+                   else:
+                      output.append(value if value is not None else '-')
                 writer.writerow(output);
 
             response = flask.make_response(si.getvalue())
@@ -79,9 +84,14 @@ def exportHistoryData(self, exportType):
 
             for row, historyDetails in enumerate(history_dict):
                 for column, field in enumerate(fields):
-                    value = historyDetails.get(field, '-')
+                    if field == "timestamp":
+					    value = formatTimestamp(historyDetails.get(field, '-'))
+                    elif field == "printTime":
+						value = formatPrintTime(historyDetails.get(field, '-'))
+                    else:
+                        value = historyDetails.get(field, '-')
                     worksheet.write(row + 1, column, (value if value is not None else '-'))
-
+		
             workbook.close()
 
             response = flask.make_response(si.getvalue())
@@ -91,3 +101,23 @@ def exportHistoryData(self, exportType):
         return response
     else:
         return flask.make_response("No history file", 400)
+
+def formatPrintTime(valueInSeconds):
+     if valueInSeconds is not None:
+	tmp = valueInSeconds
+        hours = int(tmp/3600)
+        tmp = tmp % 3600
+        minutes = int(tmp / 60)
+        tmp = tmp % 60
+        seconds = int(tmp)
+
+        return str(hours).zfill(3) + ":" + str(minutes).zfill(2) + ":" + str(seconds).zfill(2)
+     else:
+        return "-"
+
+def formatTimestamp(millis):
+     import datetime
+     if millis is not None:
+        return datetime.datetime.fromtimestamp(int(millis)).strftime('%Y-%m-%d %H:%M:%S')
+     else:
+        return '-'
