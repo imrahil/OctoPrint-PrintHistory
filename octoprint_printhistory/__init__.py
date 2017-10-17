@@ -100,8 +100,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                 history_dict = dict()
 
             history = []
-            for historyHash in history_dict.keys():
-                historyDetails = history_dict[historyHash]
+            for historyHash, historyDetails in history_dict.items():
                 row = list()
                 row.append(historyDetails["fileName"] if "fileName" in historyDetails else None)
                 row.append(historyDetails["note"] if "note" in historyDetails else None)
@@ -155,7 +154,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             self._history_dict = None
 
         def view():
-            history_dict = self._getHistoryDict()
+            history_dict = self._getHistoryDicts()
 
             if history_dict is not None:
                 result = jsonify(history=history_dict)
@@ -237,7 +236,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
     # private methods
     #
 
-    def _getHistoryDict(self):
+    def _getHistoryDicts(self):
         if self._history_dict is not None:
             return self._history_dict
 
