@@ -43,11 +43,8 @@ def exportHistoryData(self, exportType):
             csv_header = map(lambda x: x.replace(" ", "_"), csv_header)
             csv_header = rename_duplicates(fields, csv_header, prefix="g")
             rearranged_header = fields[:]
-            # This makes little to no sense. So we take all the fields that is not in the headers?
-            # Is the intent to make these "extra-only"?
-            # i fixed it in case of wanting to remove generic fields
             for column in csv_header:
-                if column not in fields:
+                if column not in headers:
                     rearranged_header.append(column)
             csv_header = rearranged_header
 
