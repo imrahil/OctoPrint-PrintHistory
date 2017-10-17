@@ -16,13 +16,7 @@ def eventHandler(self, event, payload):
     supported_event = None
 
     # support for print done & cancelled events
-    if event == Events.PRINT_DONE:
-        supported_event = event
-
-    elif event == Events.PRINT_FAILED:
-        supported_event = event
-
-    elif event == Events.METADATA_STATISTICS_UPDATED:
+    if event in [Events.PRINT_DONE, Events.PRINT_FAILED, Events.METADATA_STATISTICS_UPDATED]:
         supported_event = event
 
     # unsupported event

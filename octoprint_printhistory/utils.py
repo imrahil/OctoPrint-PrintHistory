@@ -40,6 +40,6 @@ def load_json(dictionary, key):
     parameters_json = dictionary.get(key)
     try:
         parameters = json.loads(parameters_json)
-    except ValueError:
+    except (KeyError, TypeError):
         parameters = {}
     return parameters
