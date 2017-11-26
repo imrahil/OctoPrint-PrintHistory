@@ -18,16 +18,12 @@ def eventHandler(self, event, payload):
     # support for print done & cancelled events
     if event == Events.PRINT_DONE:
         supported_event = event
-        #supported_event.user
 
     elif event == Events.PRINT_CANCELLED:
         supported_event = event
-        # supported_event.user
-        # supported_event.cancel_user
 
     elif event == Events.PRINT_FAILED:
         supported_event = event
-        # supported_event.user
 
     elif event == Events.METADATA_STATISTICS_UPDATED:
         supported_event = event
