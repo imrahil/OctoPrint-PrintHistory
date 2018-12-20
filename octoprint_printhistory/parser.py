@@ -1,9 +1,10 @@
 # coding=utf-8
 import re
 import os
-import io
+import json
 import logging
 import unittest
+import StringIO
 import ConfigParser
 
 VERSION_REGEX = re.compile(r"(\d+)?\.(\d+)?\.?(\*|\d+)")
@@ -83,11 +84,16 @@ class CuraParser(BaseParser):
             else:
                 break
         [settings.append(x.strip()) for x in reversed(settings_reversed)]
-        settings = "".join(settings).replace("\\\\n", "\n")
-        settings = settings.replace('{"global_quality": "', "")
-        settings = settings.replace('"}', "")
+        settings = "".join(settings)
+        settings = json.loads(settings)
+        # Cura >= 3.1 prints also a section extruder_quality
+        settings = settings["global_quality"].replace("\\\\n", "\n")
         config = ConfigParser.RawConfigParser(allow_no_value=True)
-        config.readfp(io.BytesIO(settings))
+        try:
+            config.readfp(StringIO.StringIO(settings))
+        except ConfigParser.MissingSectionHeaderError:
+            # TODO add a log message
+            return {}
         try:
             for section in ["values", "metadata"]:
                 for option in config.options(section):
