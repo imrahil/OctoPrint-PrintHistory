@@ -30,10 +30,16 @@ def eventHandler(self, event, payload):
         return
 
     if supported_event is not Events.METADATA_STATISTICS_UPDATED:
-        try:
-            fileData = self._file_manager.get_metadata(payload["origin"], payload["file"])
-        except:
-            fileData = None
+
+        fileData = dict()
+        retries = 0
+        while not 'analysis' in fileData.keys() and retries < 120:
+                retries += 1
+                try:
+                        fileData = self._file_manager.get_metadata(payload["origin"], payload["file"])
+                except:
+                        fileData = dict()
+                time.sleep(1)
 
         fileName = payload["name"]
 
