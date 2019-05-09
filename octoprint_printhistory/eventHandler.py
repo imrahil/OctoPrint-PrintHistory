@@ -78,8 +78,12 @@ def eventHandler(self, event, payload):
                     # Temporarily disabled
                     # if "tool0" in fileData["analysis"]["filament"] and "tool1" in fileData["analysis"]["filament"]:
                     #     currentFile["note"] = "Dual extrusion"
-            else:
+
+            # make sure we have zeroes for these values if not set above
+            if not currentFile.get("filamentVolume"):
                 currentFile["filamentVolume"] = 0
+
+            if not currentFile.get("filamentLength"):
                 currentFile["filamentLength"] = 0
 
             # how long print took
