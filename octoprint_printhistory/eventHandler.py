@@ -19,6 +19,9 @@ def eventHandler(self, event, payload):
     if event == Events.PRINT_DONE:
         supported_event = event
 
+    elif event == Events.PRINT_CANCELLED:
+        supported_event = event
+
     elif event == Events.PRINT_FAILED:
         supported_event = event
 
@@ -53,25 +56,22 @@ def eventHandler(self, event, payload):
             currentFile = {
                 "fileName": fileName,
                 "note": "",
-                "parameters": json.dumps(parameters)
+                "parameters": json.dumps(parameters),
+                "user": ""
             }
+
+            if payload["print_user"] is not None:
+                currentFile["user"] = payload["print_user"].get_id()
 
             # analysis - looking for info about filament usage
             if "analysis" in fileData:
                 if "filament" in fileData["analysis"]:
-                    if "tool0" in fileData["analysis"]["filament"]:
-                        filamentVolume = fileData["analysis"]["filament"]["tool0"]["volume"]
-                        filamentLength = fileData["analysis"]["filament"]["tool0"]['length']
+                    for (i, tool) in fileData["analysis"]["filament"]["tools"]:
+                        filamentVolume = tool["volume"]
+                        filamentLength = tool['length']
 
-                        currentFile["filamentVolume"] = filamentVolume if filamentVolume is not None else 0
-                        currentFile["filamentLength"] = filamentLength if filamentLength is not None else 0
-
-                    if "tool1" in fileData["analysis"]["filament"]:
-                        filamentVolume = fileData["analysis"]["filament"]["tool1"]["volume"]
-                        filamentLength = fileData["analysis"]["filament"]["tool1"]['length']
-
-                        currentFile["filamentVolume2"] = filamentVolume if filamentVolume is not None else 0
-                        currentFile["filamentLength2"] = filamentLength if filamentLength is not None else 0
+                        currentFile["filamentVolume"][i] = filamentVolume if filamentVolume is not None else 0
+                        currentFile["filamentLength"][i] = filamentLength if filamentLength is not None else 0
 
                     estimatedPrintTime = fileData["analysis"]["estimatedPrintTime"] if "estimatedPrintTime" in fileData["analysis"] else 0
 
@@ -117,7 +117,7 @@ def eventHandler(self, event, payload):
 
             conn = sqlite3.connect(self._history_db_path)
             cur  = conn.cursor()
-            cur.execute("INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp, parameters) VALUES (:fileName, :note, :filamentVolume, :filamentLength, :printTime, :success, :timestamp, :parameters)", currentFile)
+            cur.execute("INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp, parameters, user) VALUES (:fileName, :note, :filamentVolume, :filamentLength, :printTime, :success, :timestamp, :parameters, :user)", currentFile)
             conn.commit()
             conn.close()
 
