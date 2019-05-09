@@ -1,6 +1,6 @@
-# This plugin is unmaintained! Please find something better.
-### Or feel free to fork it and fix all bugs... :)
-~~Plugin for OctoPrint - saves filename, print time and filament usage for each print~~
+# Plugin for OctoPrint - saves filename, print time and filament usage for each print
+
+Based on @imrahil work. Just merged some PRs
 
 ![PrintHistory](printhistory.png?raw=true) 
 
