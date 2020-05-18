@@ -1,6 +1,5 @@
 # coding=utf-8
 from __future__ import absolute_import
-import os
 
 __author__ = "Jarek Szczepanski <imrahil@imrahil.com>"
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
@@ -9,9 +8,16 @@ __copyright__ = "Copyright (C) 2016 Jarek Szczepanski - Released under terms of 
 from flask import jsonify, request, make_response
 from octoprint.server.util.flask import with_revalidation_checking, check_etag
 
+<<<<<<< Updated upstream
 import octoprint.plugin
 
 import sqlite3
+=======
+import os
+import sqlite3
+import octoprint.plugin
+from .debugger import OctoDebugger
+>>>>>>> Stashed changes
 
 class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                          octoprint.plugin.EventHandlerPlugin,
@@ -24,6 +30,8 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         self._history_db_path = None
         self._history_dict = None
         self._comm = None
+        self.debugger = OctoDebugger(self, True)
+    # /def __init__(self)
 
     def on_after_startup(self):
         old_path = os.path.join(self.get_plugin_data_folder(), "history.yaml")
@@ -73,14 +81,26 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             cur.execute('ALTER TABLE print_history ADD COLUMN spool TEXT NOT NULL DEFAULT "";')
         except:
             pass
+        # /try
         conn.commit()
 
         try:
             cur.execute('ALTER TABLE print_history ADD COLUMN user TEXT NOT NULL DEFAULT "";')
         except:
             pass
+        # /try
         conn.commit()
 
+<<<<<<< Updated upstream
+=======
+        try:
+            cur.execute('ALTER TABLE print_history ADD COLUMN parameters TEXT NOT NULL DEFAULT "";')
+        except:
+            pass
+        # /try
+        conn.commit()
+
+>>>>>>> Stashed changes
         if os.path.exists(old_path):
             with open(old_path, "r") as f:
                 try:
@@ -88,9 +108,12 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                     history_dict = safe_load(f)
                 except:
                     raise
+                #/ try
+            # /with
 
             if history_dict is None:
                 history_dict = dict()
+            # /if history_dict
 
             history = []
             for historyHash in history_dict.keys():
@@ -105,19 +128,21 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                 row.append(1 if success is True else 0)
                 row.append(historyDetails["timestamp"] if "timestamp" in historyDetails else None)
                 history.append(row)
+            # /for historyHash
 
             cur.executemany('''INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)''', history)
             conn.commit()
 
             os.rename(old_path, os.path.join(self.get_plugin_data_folder(), "history.bak"))
+        # /if os.path.exists(old_path)
 
         conn.close()
+    # /def on_after_startup(self)
 
     ##~~ SettingsPlugin API
     def get_settings_defaults(self):
-        return dict(
-            spool_inventory=[]
-        )
+        return dict(spool_inventory=[])
+    # /def get_settings_defaults(self)
 
     ##~~ TemplatePlugin API
     def get_template_configs(self):
@@ -125,6 +150,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             dict(type="tab", name="History"),
             dict(type="settings", template="printhistory_settings.jinja2")
         ]
+    # /def get_template_configs(self)
 
     ##~~ AssetPlugin API
     def get_assets(self):
@@ -132,20 +158,26 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             "js": ["js/printhistory.js", "js/jquery.flot.pie.js", "js/jquery.flot.time.js", "js/jquery.flot.stack.js"],
             "css": ["css/printhistory.css"]
         }
+    # /def get_assets(self)
 
     #~~ EventPlugin API
     def on_event(self, event, payload):
         from . import eventHandler
+        self.debugger.debug("Event recieved:", event)
+        self.debugger.debug("Payload recieved:", payload)
         return eventHandler.eventHandler(self, event, payload)
+    # /def on_event(self, event, payload)
 
     @octoprint.plugin.BlueprintPlugin.route("/history", methods=["GET"])
     def getHistoryData(self):
         from octoprint.settings import valid_boolean_trues
 
         force = request.values.get("force", "false") in valid_boolean_trues
+        self.debugger.debug("Acquiring history data. Force:", force)
 
         if force:
             self._history_dict = None
+        # /if force
 
         def view():
             history_dict = self._getHistoryDict()
@@ -154,8 +186,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                 result = jsonify(history=history_dict)
             else:
                 result = jsonify({})
-
+            self.debugger.debug("Json Result:", result)
             return result
+        # /def view()
 
         def etag():
             conn = sqlite3.connect(self._history_db_path)
@@ -166,17 +199,22 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
             import hashlib
             hash = hashlib.sha1()
-            hash.update(str(lm))
+            hash.update(str(lm).encode("latin-1"))
             hexdigest = hash.hexdigest()
+            self.debugger.debug("hexdigest:", hexdigest)
             return hexdigest
+        # /def etag()
 
         def condition():
             check = check_etag(etag())
+            self.debugger.debug("check:", check)
             return check
+        # /def condition()
 
         return with_revalidation_checking(etag_factory=lambda *args, **kwargs: etag(),
                                           condition=lambda *args, **kwargs: condition(),
                                           unless=lambda: force)(view)()
+    # /def getHistoryData(self)
 
 
     @octoprint.plugin.BlueprintPlugin.route("/history/<int:identifier>", methods=["DELETE"])
@@ -190,18 +228,21 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         conn.close()
 
         return self.getHistoryData()
+    # /def deleteHistoryData(self, identifier)
 
     @octoprint.plugin.BlueprintPlugin.route("/details", methods=["PUT"])
     def saveNote(self):
         from werkzeug.exceptions import BadRequest
 
         try:
-       		json_data = request.json
-       	except BadRequest:
-       		return make_response("Malformed JSON body in request", 400)
+            json_data = request.json
+        except BadRequest:
+            return make_response("Malformed JSON body in request", 400)
+        # /try
 
         if not "id" in json_data:
-       		return make_response("No profile included in request", 400)
+            return make_response("No profile included in request", 400)
+        # /if not "id"
 
         identifier = json_data["id"]
         note = json_data["note"] if "note" in json_data else ""
@@ -220,18 +261,25 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         conn.close()
 
         return self.getHistoryData()
+    # /def saveNote(self)
 
     @octoprint.plugin.BlueprintPlugin.route("/export/<string:exportType>", methods=["GET"])
     def exportHistoryData(self, exportType):
         from . import export
         return export.exportHistoryData(self, exportType)
+    # /def exportHistoryData(self, exportType)
+
+
 
     #
     # private methods
     #
 
+
+
     def _getHistoryDict(self):
         if self._history_dict is not None:
+            self.debugger.debug("history_dict is None")
             return self._history_dict
 
         conn = sqlite3.connect(self._history_db_path)
@@ -239,8 +287,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         cur.execute("SELECT * FROM print_history ORDER BY timestamp")
         history_dict = [dict((cur.description[i][0], value) \
                   for i, value in enumerate(row)) for row in cur.fetchall()]
-
         conn.close()
+
+        self.debugger.debug("history_dict:", history_dict)
 
         if history_dict is None:
             history_dict = dict()
@@ -248,6 +297,7 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         self._history_dict = history_dict
 
         return self._history_dict
+    # /private def _getHistoryDict(self)
 
     ##~~ Softwareupdate hook
     def get_update_information(self):
@@ -266,19 +316,25 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
                 pip="https://github.com/imrahil/OctoPrint-PrintHistory/archive/{target_version}.zip"
             )
         )
+    # /private def get_update_information(self)
 
     def factory_serial_handler(self, comm_instance, port, baudrate, read_timeout):
         self._comm = comm_instance
         return None
+    # /private def factory_serial_handler(self, comm_instance, port, baudrate, read_timeout)
+
+# /class PrintHistoryPlugin
 
 __plugin_name__ = "Print History Plugin"
+__plugin_pythoncompat__ = ">=3,<4"
 
 def __plugin_load__():
-	global __plugin_implementation__
-	__plugin_implementation__ = PrintHistoryPlugin()
+    global __plugin_implementation__
+    __plugin_implementation__ = PrintHistoryPlugin()
 
-	global __plugin_hooks__
-	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+    global __plugin_hooks__
+    __plugin_hooks__ = {
+        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
         "octoprint.comm.transport.serial.factory": __plugin_implementation__.factory_serial_handler
-	}
+    }
+# /def __plugin_load__()

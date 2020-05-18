@@ -1,73 +1,83 @@
 $(function() {
     function PrintHistoryViewModel(parameters) {
         var self = this;
-
-        self.loginState = parameters[0];
-        self.global_settings = parameters[1];
-        self.users = parameters[2];
-
-        self.totalTime = ko.observable();
-        self.totalUsage = ko.observable();
-        self.averageTime = ko.observable();
-        self.averageUsage = ko.observable();
-
-        self.isPrinting = ko.observable(undefined);
-
-        self.spool_inventory = ko.observableArray([]);
+        self.loginState           = parameters[0];
+        self.global_settings      = parameters[1];
+        self.users                = parameters[2];
+        self.totalTime            = ko.observable();
+        self.totalUsage           = ko.observable();
+        self.averageTime          = ko.observable();
+        self.averageUsage         = ko.observable();
+        self.isPrinting           = ko.observable(undefined);
+        self.spool_inventory      = ko.observableArray([]);
         self.spool_inventory_base = ko.observableArray([]);
-        self.availableCurrencies = ko.observableArray(['$', '€', '£']);
+        self.availableCurrencies  = ko.observableArray(['$', '€', '£']);
+        self.itemForEditing       = ko.observable();
 
-        self.itemForEditing = ko.observable();
+        /**
+         * History Item Class
+         * Datafields:
+         * id
+         * fileName
+         * success
+         * filamentVolume
+         * filamentLength
+         * timestamp
+         * printTime
+         * note
+         * spool
+         * user
+         *
+         * methods:
+         *  update(data)
+         */
+        class HistoryItem {
+            constructor(data) {
+                //update view model
+                this.id = ko.observable();
+                this.fileName = ko.observable();
+                this.success = ko.observable();
+                this.filamentVolume = ko.observable();
+                this.filamentLength = ko.observable();
+                this.timestamp = ko.observable();
+                this.printTime = ko.observable();
+                this.note = ko.observable();
+                this.spool = ko.observable();
+                this.user = ko.observable();
+                this.successful       = ko.computed(function () {return this.success() == 1; },               this);
+                this.filamentUsage    = ko.computed(self.formatFilament,                                      this);
+                this.formatedDate     = ko.computed(function () { return formatDate(this.timestamp()); },     this);
+                this.formatedTimeAgo  = ko.computed(function () { return formatTimeAgo(this.timestamp()); },  this);
+                this.formatedDuration = ko.computed(function () { return formatDuration(this.printTime()); }, this);
+                this.update(data);
+            }
 
-        var HistoryItem = function(data) {
-            this.id = ko.observable();
-            this.fileName = ko.observable();
-            this.success = ko.observable();
-            this.filamentVolume = ko.observable();
-            this.filamentLength = ko.observable();
-            this.timestamp = ko.observable();
-            this.printTime = ko.observable();
-            this.note = ko.observable();
-            this.spool = ko.observable();
-            this.user = ko.observable();
-
-            this.successful = ko.computed(function() {
-                return this.success() == 1;
-            }, this);
-            this.filamentUsage = ko.computed(self.formatFilament, this);
-            this.formatedDate = ko.computed(function () {
-                return formatDate(this.timestamp());
-            }, this);
-            this.formatedTimeAgo = ko.computed(function () {
-                return formatTimeAgo(this.timestamp());
-            }, this);
-            this.formatedDuration = ko.computed(function () {
-                return formatDuration(this.printTime());
-            }, this);
-
-            this.update(data);
+            /**
+             * Update internal datafields acording to the new data
+             * @param {*} data
+             */
+            update(data) {
+                var updateData = data || {};
+                this.id(updateData.id);
+                this.fileName(updateData.fileName);
+                this.success(updateData.success);
+                this.filamentVolume(updateData.filamentVolume || 0);
+                this.filamentLength(updateData.filamentLength || 0);
+                this.timestamp(updateData.timestamp || 0);
+                this.printTime(updateData.printTime || 0);
+                this.note(updateData.note || "");
+                this.spool(updateData.spool || "");
+                this.user(updateData.user || "");
+            }
         }
 
-        HistoryItem.prototype.update = function (data) {
-            var updateData = data || {}
-
-            this.id(updateData.id);
-            this.fileName(updateData.fileName);
-            this.success(updateData.success);
-            this.filamentVolume(updateData.filamentVolume || 0);
-            this.filamentLength(updateData.filamentLength || 0);
-            this.timestamp(updateData.timestamp || 0);
-            this.printTime(updateData.printTime || 0);
-            this.note(updateData.note || "");
-            this.spool(updateData.spool || "");
-            this.user(updateData.user || "");
-        };
-
-        self.onHistoryTab = false;
-        self.dataIsStale = true;
-        self.requestingData = false;
-        self.pureData = {};
+        //Initialize
+        self.onHistoryTab          = false;
+        self.dataIsStale           = true;
+        self.requestingData        = false;
+        self.pureData              = {};
         self.lastMonthGraphMinimum = ko.observable(moment(new Date()).subtract(1, 'months').valueOf());
+
 
         self.onStartup = function () {
             self.detailsDialog = $("#printhistory_details_dialog");
@@ -102,14 +112,17 @@ $(function() {
                 force = params.force;
             }
 
+            //So if we are not on the history tab,
+            //we will not update the graphs?
             if (!self.onHistoryTab) {
                 self.dataIsStale = true;
                 return;
             }
-            //console.log('PrintHistory - request data');
-            if (self.requestingData) {
-                return;
-            }
+
+            // console.log('PrintHistory - request data');
+
+            if (self.requestingData) {return;}
+
             self.requestingData = true;
 
             $.ajax({
@@ -183,7 +196,7 @@ $(function() {
         self.changeGraphRange = function (range) {
             if (range == 'week') {
                 self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'weeks').valueOf());
-            } else if (range == 'month'){
+            } else if (range == 'month') {
                 self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'months').valueOf());
             } else {
                 self.lastMonthGraphMinimum(moment(new Date()).subtract(1, 'quarter').valueOf());
@@ -197,9 +210,7 @@ $(function() {
         }
 
         self.updatePlots = function() {
-            if (!self.onHistoryTab) {
-                return;
-            }
+            if (!self.onHistoryTab) {return;}
 
             if (self.dataIsStale) {
                 self.requestData();
@@ -207,7 +218,7 @@ $(function() {
             }
 
             var lastmonth_graph = $("#printhistory-lastmonth-graph");
-            var success_graph = $("#printhistory-success-graph");
+            var success_graph   = $("#printhistory-success-graph");
 
             var lastmonthGraphOptions = {
                 series: {
@@ -294,13 +305,13 @@ $(function() {
             });
 
             var lastmonth_data = [
-                { label: "Success", color: '#31C448', data: successArr},
-                { label: "Failure", color: '#FF0000', data: failureArr}
+                { label: "Success", color: '#31C448', data: successArr },
+                { label: "Failure", color: '#FF0000', data: failureArr }
             ];
 
             var success_data = [
-                { label: "Success", color: '#31C448', data: successCount},
-                { label: "Failure", color: '#FF0000', data: failureCount}
+                { label: "Success", color: '#31C448', data: successCount },
+                { label: "Failure", color: '#FF0000', data: failureCount }
             ];
 
             $.plot(lastmonth_graph, lastmonth_data, lastmonthGraphOptions);
@@ -336,7 +347,6 @@ $(function() {
         self.showDetailsDialog = function(selectedData) {
             if (self.detailsDialog) {
                 self.itemForEditing(new HistoryItem(ko.mapping.toJS(selectedData)));
-
                 self.detailsDialog.modal("show");
             }
         };
@@ -375,15 +385,14 @@ $(function() {
 
         self.closeDetails = function(data) {
             self.fromResponse(data);
-
             self.listHelper.selectNone();
-
             self.detailsDialog.modal("hide");
         };
 
         self.listHelper = new ItemListHelper(
             "historyItems",
             {
+                //Sorters
                 "fileNameAsc": function (a, b) {
                     // sorts ascending
                     if (a.fileName().toLocaleLowerCase() < b.fileName().toLocaleLowerCase()) return -1;
@@ -422,6 +431,7 @@ $(function() {
                 }
             },
             {
+                //Filters
                 "all": function (item) {
                     return true;
                 },
@@ -432,35 +442,39 @@ $(function() {
                     return (item.success() == 0);
                 }
             },
-            "timestamp", ["all"], [["all", "successful", "failed"]], 10
+            "timestamp", //???
+            ["all"], //???
+            [["all", "successful", "failed"]], //???
+            10 //???
         );
 
         self.listHelper.items.subscribe(function(newValue) {
-            var totalTime = 0;
-            var totalUsage = {
-                length: 0,
-                volume: 0
-            };
-            var averageUsage = {
-                length: 0,
-                volume: 0
-            };
+            var totalTime    = 0;
+            var totalUsage   = {length: 0, volume: 0};
+            var averageUsage = {length: 0, volume: 0};
 
-            var itemList = newValue;
-            var itemListLength = itemList.length;
-            for (var i = 0; i < itemListLength; i++) {
-                totalTime += itemList[i].printTime();
+            var itemList       = newValue;
+            // var itemListLength = itemList.length;
 
+            //For each item in the list
+            for (var i = 0; i < itemList.length; i++) {
+                //Add to total print time
+                totalTime         += itemList[i].printTime();
+                //Add to total filament used
                 totalUsage.length += itemList[i].filamentLength();
+                //Add to total filament volume used
                 totalUsage.volume += itemList[i].filamentVolume();
             }
 
+            //Format datafields
             self.totalTime(formatDuration(totalTime));
             self.totalUsage(formatFilament(totalUsage));
 
+            //Get average length and volume
             averageUsage.length = totalUsage.length / itemListLength;
             averageUsage.volume = totalUsage.volume / itemListLength;
 
+            //Format datafields
             self.averageTime(formatDuration(totalTime / itemListLength));
             self.averageUsage(formatFilament(averageUsage));
         });
@@ -489,25 +503,40 @@ $(function() {
             }
         };
 
+        //TODO improve readability
         self.sortOrder = function(orderType) {
             var order = "";
 
             if (orderType == "fileName") {
-                order = (self.listHelper.currentSorting() == 'fileNameAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'fileNameDesc') ? '(' + _('descending') + ')' : '';
+                order = (self.listHelper.currentSorting() == 'fileNameAsc') ?
+                    '(' + _('ascending') + ')' :
+                    (self.listHelper.currentSorting() == 'fileNameDesc') ?
+                        '(' + _('descending') + ')' :
+                        '';
             } else if (orderType == "timestamp") {
-                order = (self.listHelper.currentSorting() == 'timestampAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'timestampDesc') ? '(' + _('descending') + ')' : '';
+                order = (self.listHelper.currentSorting() == 'timestampAsc') ?
+                    '(' + _('ascending') + ')' :
+                    (self.listHelper.currentSorting() == 'timestampDesc') ?
+                        '(' + _('descending') + ')' :
+                        '';
             } else {
-                order = (self.listHelper.currentSorting() == 'printTimeAsc') ? '(' + _('ascending') + ')' : (self.listHelper.currentSorting() == 'printTimeDesc') ? '(' + _('descending') + ')' : '';
+                order = (self.listHelper.currentSorting() == 'printTimeAsc') ?
+                    '(' + _('ascending') + ')' :
+                    (self.listHelper.currentSorting() == 'printTimeDesc') ?
+                        '(' + _('descending') + ')' :
+                        '';
             }
 
             return order;
         };
     }
 
-    ADDITIONAL_VIEWMODELS.push({
-        construct: PrintHistoryViewModel,
-        name: "PrintHistoryViewModel",
-        dependencies: ["loginStateViewModel", "settingsViewModel", "usersViewModel"],
-        elements: ["#tab_plugin_printhistory", "#settings_plugin_printhistory"]
-});
+    OCTOPRINT_VIEWMODELS.push(
+        {
+            construct: PrintHistoryViewModel,
+            name: "PrintHistoryViewModel",
+            dependencies: ["loginStateViewModel", "settingsViewModel", "usersViewModel"],
+            elements: ["#tab_plugin_printhistory", "#settings_plugin_printhistory"]
+        }
+    );
 });
