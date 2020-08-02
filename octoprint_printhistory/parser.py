@@ -4,8 +4,15 @@ import os
 import json
 import logging
 import unittest
-import StringIO
-import ConfigParser
+
+import sys
+if sys.version_info >= (3,0):
+    import configparser
+    from io import StringIO
+else:
+    import ConfigParser
+    import StringIO
+
 
 VERSION_REGEX = re.compile(r"(\d+)?\.(\d+)?\.?(\*|\d+)")
 BUFFER_SIZE = 8192

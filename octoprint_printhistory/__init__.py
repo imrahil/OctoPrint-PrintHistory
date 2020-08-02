@@ -8,6 +8,7 @@ __copyright__ = "Copyright (C) 2016 Jarek Szczepanski - Released under terms of 
 
 from flask import jsonify, request, make_response
 from octoprint.server.util.flask import with_revalidation_checking, check_etag
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 import octoprint.plugin
 import sqlite3
