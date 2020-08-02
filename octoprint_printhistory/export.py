@@ -6,7 +6,7 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 
 def exportHistoryData(self, exportType):
     import flask
-    import csv
+    import unicodecsv as csv
     import StringIO
     import re
     from utils import namedtuple_with_defaults, prepare_dict, load_json, rename_duplicates
@@ -16,25 +16,30 @@ def exportHistoryData(self, exportType):
     if history_dict is not None:
         si = StringIO.StringIO()
 
-        headers = ['File name', 'Timestamp', 'Success', 'Print time', 'Filament length', 'Filament volume']
-        fields = ['fileName', 'timestamp', 'success', 'printTime', 'filamentLength', 'filamentVolume']
+        headers = ['File name', 'Timestamp', 'Success', 'Print time', 'Spool', 'Filament length', 'Filament volume', 'User']
+        fields = ['fileName', 'timestamp', 'success', 'printTime', 'spool', 'filamentLength', 'filamentVolume', 'user']
         if exportType == 'csv':
-            writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+            writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
             writer.writerow(headers)
 
             for historyDetails in history_dict:
                 output = list()
                 for field in fields:
-                    value = historyDetails.get(field, '-')
-                    output.append(value if value is not None else '-')
+                   value = historyDetails.get(field, '-')
+                   if field == "timestamp":
+                      output.append(formatTimestamp(value))
+                   elif field == "printTime":
+                      output.append(formatPrintTime(value))
+                   else:
+                      output.append(value if value is not None else '-')
                 writer.writerow(output);
 
             response = flask.make_response(si.getvalue())
             response.headers["Content-type"] = "text/csv"
             response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history_export.csv"
         elif exportType == 'csv_extra':
-            fields = ["fileName", "timestamp", "success", "printTime", "filamentLength", "filamentVolume"]
-            unused_fields = ["spool", "user", "note", "id", "parameters"]
+            fields = ['fileName', 'timestamp', 'success', 'printTime', 'spool', 'filamentLength', 'filamentVolume', 'user']
+            unused_fields = ["note", "id", "parameters"]
             csv_header = set(fields)
 
             for historyDetails in history_dict:
@@ -50,7 +55,7 @@ def exportHistoryData(self, exportType):
             csv_header = rearranged_header
 
             ParametersRow = namedtuple_with_defaults('TableRow', csv_header)
-            writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+            writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
             writer.writerow(csv_header)
             for historyDetails in history_dict:
                 parameters = load_json(historyDetails, "parameters")
@@ -79,9 +84,14 @@ def exportHistoryData(self, exportType):
 
             for row, historyDetails in enumerate(history_dict):
                 for column, field in enumerate(fields):
-                    value = historyDetails.get(field, '-')
+                    if field == "timestamp":
+					    value = formatTimestamp(historyDetails.get(field, '-'))
+                    elif field == "printTime":
+						value = formatPrintTime(historyDetails.get(field, '-'))
+                    else:
+                        value = historyDetails.get(field, '-')
                     worksheet.write(row + 1, column, (value if value is not None else '-'))
-
+		
             workbook.close()
 
             response = flask.make_response(si.getvalue())
@@ -91,3 +101,23 @@ def exportHistoryData(self, exportType):
         return response
     else:
         return flask.make_response("No history file", 400)
+
+def formatPrintTime(valueInSeconds):
+     if valueInSeconds is not None:
+	tmp = valueInSeconds
+        hours = int(tmp/3600)
+        tmp = tmp % 3600
+        minutes = int(tmp / 60)
+        tmp = tmp % 60
+        seconds = int(tmp)
+
+        return str(hours).zfill(3) + ":" + str(minutes).zfill(2) + ":" + str(seconds).zfill(2)
+     else:
+        return "-"
+
+def formatTimestamp(millis):
+     import datetime
+     if millis is not None:
+        return datetime.datetime.fromtimestamp(int(millis)).strftime('%Y-%m-%d %H:%M:%S')
+     else:
+        return '-'
