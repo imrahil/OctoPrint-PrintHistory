@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 import os
+import sys
 
 __author__ = "Jarek Szczepanski <imrahil@imrahil.com>"
 __license__ = "GNU Affero General Public License http://www.gnu.org/licenses/agpl.html"
@@ -8,6 +9,7 @@ __copyright__ = "Copyright (C) 2016 Jarek Szczepanski - Released under terms of 
 
 from flask import jsonify, request, make_response
 from octoprint.server.util.flask import with_revalidation_checking, check_etag
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 import octoprint.plugin
 import sqlite3
@@ -173,7 +175,10 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
             import hashlib
             hash = hashlib.sha1()
-            hash.update(str(lm))
+	    if sys.version_info >= (3,0):
+                hash.update(str(lm).encode())
+	    else:
+                hash.update(str(lm))
             hexdigest = hash.hexdigest()
             return hexdigest
 
