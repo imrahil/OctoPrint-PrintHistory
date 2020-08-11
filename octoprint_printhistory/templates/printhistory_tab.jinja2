@@ -107,6 +107,7 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
 <div style="float: left; width: 50%">
     <h1>Export as</h1>
     <a href="#" data-bind="attr: {href: $root.export('csv'), css: {disabled: !$root.export('csv')}}">CSV</a> |
+    <a href="#" data-bind="attr: {href: $root.export('csv_extra'), css: {disabled: !$root.export('csv_extra')}}">CSV Extra</a> |
     <a href="#" data-bind="attr: {href: $root.export('excel'), css: {disabled: !$root.export('excel')}}">Excel</a>
 <!--
     <a href="#" data-bind="attr: {href: $root.export('pdf'), css: {disabled: !$root.export('pdf')}}">PDF</a>

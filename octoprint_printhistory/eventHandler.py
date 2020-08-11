@@ -6,8 +6,10 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 
 def eventHandler(self, event, payload):
     from octoprint.events import Events
+    import json
     import time
     from operator import itemgetter
+    from .parser import UniversalParser
 
     import sqlite3
 
@@ -40,9 +42,12 @@ def eventHandler(self, event, payload):
             success = None
             estimatedPrintTime = 0
 
+            gcode_parser = UniversalParser(payload["file"], logger=self._logger)
+            parameters = gcode_parser.parse()
             currentFile = {
                 "fileName": fileName,
-                "note": ""
+                "note": "",
+                "parameters": json.dumps(parameters)
             }
 
             # analysis - looking for info about filament usage
@@ -67,16 +72,20 @@ def eventHandler(self, event, payload):
                     # Temporarily disabled
                     # if "tool0" in fileData["analysis"]["filament"] and "tool1" in fileData["analysis"]["filament"]:
                     #     currentFile["note"] = "Dual extrusion"
-            else:
+
+            # make sure we have zeroes for these values if not set above
+            if not currentFile.get("filamentVolume"):
                 currentFile["filamentVolume"] = 0
+
+            if not currentFile.get("filamentLength"):
                 currentFile["filamentLength"] = 0
 
             # how long print took
             if "time" in payload:
                 currentFile["printTime"] = payload["time"]
             else:
-                printTime = self._comm.getPrintTime()
-                currentFile["printTime"] = printTime if printTime is not None else ""
+                printTime = self._comm.getPrintTime() if self._comm is not None else ""
+                currentFile["printTime"] = printTime
 
 
             # when print happened and what was the result
@@ -102,7 +111,7 @@ def eventHandler(self, event, payload):
 
             conn = sqlite3.connect(self._history_db_path)
             cur  = conn.cursor()
-            cur.execute("INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp) VALUES (:fileName, :note, :filamentVolume, :filamentLength, :printTime, :success, :timestamp)", currentFile)
+            cur.execute("INSERT INTO print_history (fileName, note, filamentVolume, filamentLength, printTime, success, timestamp, parameters) VALUES (:fileName, :note, :filamentVolume, :filamentLength, :printTime, :success, :timestamp, :parameters)", currentFile)
             conn.commit()
             conn.close()
 
