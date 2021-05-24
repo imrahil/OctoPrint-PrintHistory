@@ -31,7 +31,7 @@ def eventHandler(self, event, payload):
 
     if supported_event is not Events.METADATA_STATISTICS_UPDATED:
         try:
-            fileData = self._file_manager.get_metadata(payload["origin"], payload["file"])
+            fileData = self._file_manager.get_metadata(payload["origin"], payload["name"])
         except:
             fileData = None
 
@@ -41,8 +41,7 @@ def eventHandler(self, event, payload):
             timestamp = 0
             success = None
             estimatedPrintTime = 0
-
-            gcode_parser = UniversalParser(payload["file"], logger=self._logger)
+            gcode_parser = UniversalParser(self._file_manager.path_on_disk(payload["origin"], payload["path"]), logger=self._logger)
             parameters = gcode_parser.parse()
             currentFile = {
                 "fileName": fileName,
