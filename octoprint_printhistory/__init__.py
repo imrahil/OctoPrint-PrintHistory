@@ -175,9 +175,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 
             import hashlib
             hash = hashlib.sha1()
-	    if sys.version_info >= (3,0):
+            if sys.version_info >= (3,0):
                 hash.update(str(lm).encode())
-	    else:
+            else:
                 hash.update(str(lm))
             hexdigest = hash.hexdigest()
             return hexdigest
