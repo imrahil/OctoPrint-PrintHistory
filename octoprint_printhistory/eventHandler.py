@@ -41,6 +41,9 @@ def eventHandler(self, event, payload):
             timestamp = 0
             success = None
             estimatedPrintTime = 0
+            self._logger.info("Origin: "+ payload["origin"])
+            self._logger.info("Path: "+ payload["path"])
+            self._logger.info("Path_On_disk: "+ self._file_manager.path_on_disk(payload["origin"], payload["path"]))
             gcode_parser = UniversalParser(self._file_manager.path_on_disk(payload["origin"], payload["path"]), logger=self._logger)
             parameters = gcode_parser.parse()
             currentFile = {
@@ -48,7 +51,7 @@ def eventHandler(self, event, payload):
                 "note": "",
                 "parameters": json.dumps(parameters)
             }
-
+            self._logger.info(json.dumps(parameters))
             # analysis - looking for info about filament usage
             if "analysis" in fileData:
                 if "filament" in fileData["analysis"]:
