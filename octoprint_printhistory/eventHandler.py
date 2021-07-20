@@ -30,20 +30,33 @@ def eventHandler(self, event, payload):
         return
 
     if supported_event is not Events.METADATA_STATISTICS_UPDATED:
+        self._logger.info("Name: "+ payload["name"])
+        self._logger.info("Origin: "+ payload["origin"])
+        self._logger.info("Path: "+ payload["path"])
+        self._logger.info("Path_On_disk: "+ self._file_manager.path_on_disk(payload["origin"], payload["path"]))
         try:
             fileData = self._file_manager.get_metadata(payload["origin"], payload["name"])
+            self._logger.info("Got metadata from name")
         except:
-            fileData = None
+            self._logger.info("Error getting metadata from name, trying with path")
+            try:
+                fileData = self._file_manager.get_metadata(payload["origin"], payload["path"])
+            except:
+                self._logger.info("Error getting metadata from name and path, terminating")
+                fileData = None
 
         fileName = payload["name"]
 
+       if fileData is None:
+         self._logger.info("FileData came out empty, trying to get it from path")
+         fileData = self._file_manager.get_metadata(payload["origin"], payload["path"])
+
+
         if fileData is not None:
+            self._logger.info("found fileData")
             timestamp = 0
             success = None
             estimatedPrintTime = 0
-            self._logger.info("Origin: "+ payload["origin"])
-            self._logger.info("Path: "+ payload["path"])
-            self._logger.info("Path_On_disk: "+ self._file_manager.path_on_disk(payload["origin"], payload["path"]))
             gcode_parser = UniversalParser(self._file_manager.path_on_disk(payload["origin"], payload["path"]), logger=self._logger)
             parameters = gcode_parser.parse()
             currentFile = {
@@ -119,6 +132,7 @@ def eventHandler(self, event, payload):
 
     else:
         # sometimes Events.PRINT_DONE is fired BEFORE metadata.yaml is updated - we have to wait for Events.METADATA_STATISTICS_UPDATED and update database
+        self._logger.info("fileData not found")
         try:
             fileData = self._file_manager.get_metadata(payload["storage"], payload["path"])
         except:
