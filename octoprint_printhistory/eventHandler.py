@@ -47,9 +47,9 @@ def eventHandler(self, event, payload):
 
         fileName = payload["name"]
 
-       if fileData is None:
-         self._logger.info("FileData came out empty, trying to get it from path")
-         fileData = self._file_manager.get_metadata(payload["origin"], payload["path"])
+        if fileData is None:
+          self._logger.info("FileData came out empty, trying to get it from path")
+          fileData = self._file_manager.get_metadata(payload["origin"], payload["path"])
 
 
         if fileData is not None:
