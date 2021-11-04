@@ -6,25 +6,29 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 
 def exportHistoryData(self, exportType):
     import flask
-    import unicodecsv as csv
     import sys
     if sys.version_info >= (3,0):
         from io import StringIO
+        import csv
     else:
-        import StringIO
+        from StringIO import StringIO
+        import unicodecsv as csv
 
     import re
-    from utils import namedtuple_with_defaults, prepare_dict, load_json, rename_duplicates
+    from .utils import namedtuple_with_defaults, prepare_dict, load_json, rename_duplicates
 
     history_dict = self._getHistoryDict()
 
     if history_dict is not None:
-        si = StringIO.StringIO()
+        si = StringIO()
 
         headers = ['File name', 'Timestamp', 'Success', 'Print time', 'Spool', 'Filament length', 'Filament volume', 'User']
         fields = ['fileName', 'timestamp', 'success', 'printTime', 'spool', 'filamentLength', 'filamentVolume', 'user']
         if exportType == 'csv':
-            writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
+            if sys.version_info >= (3,0):
+                writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+            else:
+                writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
             writer.writerow(headers)
 
             for historyDetails in history_dict:
@@ -60,7 +64,10 @@ def exportHistoryData(self, exportType):
             csv_header = rearranged_header
 
             ParametersRow = namedtuple_with_defaults('TableRow', csv_header)
-            writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
+            if sys.version_info >= (3,0):
+                writer = csv.writer(si, quoting=csv.QUOTE_ALL)
+            else:
+                writer = csv.writer(si, quoting=csv.QUOTE_ALL, encoding='utf-8')
             writer.writerow(csv_header)
             for historyDetails in history_dict:
                 parameters = load_json(historyDetails, "parameters")
