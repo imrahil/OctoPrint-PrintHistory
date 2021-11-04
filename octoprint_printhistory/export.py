@@ -85,13 +85,13 @@ def exportHistoryData(self, exportType):
             for row, historyDetails in enumerate(history_dict):
                 for column, field in enumerate(fields):
                     if field == "timestamp":
-					    value = formatTimestamp(historyDetails.get(field, '-'))
+                        value = formatTimestamp(historyDetails.get(field, '-'))
                     elif field == "printTime":
-						value = formatPrintTime(historyDetails.get(field, '-'))
+                        value = formatPrintTime(historyDetails.get(field, '-'))
                     else:
                         value = historyDetails.get(field, '-')
                     worksheet.write(row + 1, column, (value if value is not None else '-'))
-		
+
             workbook.close()
 
             response = flask.make_response(si.getvalue())
@@ -104,16 +104,16 @@ def exportHistoryData(self, exportType):
 
 def formatPrintTime(valueInSeconds):
      if valueInSeconds is not None:
-	tmp = valueInSeconds
-        hours = int(tmp/3600)
-        tmp = tmp % 3600
-        minutes = int(tmp / 60)
-        tmp = tmp % 60
-        seconds = int(tmp)
-
-        return str(hours).zfill(3) + ":" + str(minutes).zfill(2) + ":" + str(seconds).zfill(2)
+         tmp = valueInSeconds
+         hours = int(tmp/3600)
+         tmp = tmp % 3600
+         minutes = int(tmp / 60)
+         tmp = tmp % 60
+         seconds = int(tmp)
+         
+         return str(hours).zfill(3) + ":" + str(minutes).zfill(2) + ":" + str(seconds).zfill(2)
      else:
-        return "-"
+         return "-"
 
 def formatTimestamp(millis):
      import datetime
