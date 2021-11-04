@@ -7,6 +7,7 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 def exportHistoryData(self, exportType):
     import flask
     import unicodecsv as csv
+    import sys
     if sys.version_info >= (3,0):
         from io import StringIO
     else:
