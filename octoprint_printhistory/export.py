@@ -7,7 +7,11 @@ __copyright__ = "Copyright (C) 2014 Jarek Szczepanski - Released under terms of 
 def exportHistoryData(self, exportType):
     import flask
     import unicodecsv as csv
-    import StringIO
+    if sys.version_info >= (3,0):
+        from io import StringIO
+    else:
+        import StringIO
+
     import re
     from utils import namedtuple_with_defaults, prepare_dict, load_json, rename_duplicates
 
