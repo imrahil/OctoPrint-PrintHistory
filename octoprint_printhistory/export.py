@@ -9,6 +9,7 @@ def exportHistoryData(self, exportType):
     import sys
     if sys.version_info >= (3,0):
         from io import StringIO
+        from io import BytesIO
         import csv
     else:
         from StringIO import StringIO
@@ -88,6 +89,9 @@ def exportHistoryData(self, exportType):
             response.headers["Content-Disposition"] = "attachment; filename=octoprint_print_history(extra)_export.csv"
         elif exportType == 'excel':
             import xlsxwriter
+
+            if sys.version_info >= (3,0):
+                si = BytesIO()
 
             workbook = xlsxwriter.Workbook(si)
             worksheet = workbook.add_worksheet()
