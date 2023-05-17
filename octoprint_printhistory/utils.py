@@ -20,7 +20,7 @@ def rename_duplicates(immutable, mutable, prefix):
     """
     for value in mutable:
         if value in immutable:
-            mutable[mutable.index(value)] = str(prefix) + value
+            value = str(prefix) + value
     return mutable
 
 def namedtuple_with_defaults(typename, field_names, default_values=()):
@@ -29,7 +29,7 @@ def namedtuple_with_defaults(typename, field_names, default_values=()):
     """
     T = collections.namedtuple(typename, field_names)
     T.__new__.__defaults__ = (None,) * len(T._fields)
-    if isinstance(default_values, collections.Mapping):
+    if isinstance(default_values, collections.abc.Mapping):
         prototype = T(**default_values)
     else:
         prototype = T(*default_values)
@@ -40,6 +40,6 @@ def load_json(dictionary, key):
     parameters_json = dictionary.get(key)
     try:
         parameters = json.loads(parameters_json)
-    except ValueError:
+    except:
         parameters = {}
     return parameters
