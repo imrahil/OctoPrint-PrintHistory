@@ -127,7 +127,7 @@ def formatPrintTime(valueInSeconds):
          tmp = tmp % 60
          seconds = int(tmp)
          
-         return str(hours).zfill(3) + ":" + str(minutes).zfill(2) + ":" + str(seconds).zfill(2)
+         return str(hours) + ":" + str(minutes).zfill(2) + ":" + str(seconds).zfill(2)
      else:
          return "-"
 
