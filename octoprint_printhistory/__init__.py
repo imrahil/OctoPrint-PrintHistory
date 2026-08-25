@@ -135,6 +135,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             dict(type="settings", template="printhistory_settings.jinja2")
         ]
 
+    def is_template_autoescaped(self):
+        return True
+
     ##~~ AssetPlugin API
     def get_assets(self):
         return {
