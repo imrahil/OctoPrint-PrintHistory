@@ -40,7 +40,7 @@ Refresh <a href="#" data-bind="click: function() { requestData({force: true}); }
             <td style="text-align: center;"><span data-bind="css: {'icon-ok-sign' : success() == 1, 'icon-exclamation-sign' : success() == 0}, style: { color: success() == 1 ? 'green' : 'red' }"></span></td>
             <td data-bind="text: formatedDate, attr: { title: formatedTimeAgo }"></td>
             <td style="text-align: center;" data-bind="text: formatedDuration"></td>
-            <td style="text-align: center;" data-bind="html: filamentUsage"></td>
+            <td style="text-align: center; white-space: pre-line;" data-bind="text: filamentUsage"></td>
             <td>
                 <div class="btn-group action-buttons" data-bind="visible: $root.loginState.isUser() && !$root.isPrinting()">
                     <div class="btn btn-mini" data-bind="click: function() { $root.showDetailsDialog($data); }" title="{{ _('Additional data') }}"><i class="icon-wrench"></i></div>

@@ -160,7 +160,7 @@ $(function() {
             //}
 
             if (tool0 !== "" && tool1 !== "") {
-                output = "Tool0: " + tool0 + "<br>Tool1: " + tool1;
+                output = "Tool0: " + tool0 + "\nTool1: " + tool1;
             } else {
                 if (tool0 !== "") {
                     output = tool0;
