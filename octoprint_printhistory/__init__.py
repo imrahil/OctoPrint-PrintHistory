@@ -208,12 +208,12 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         from werkzeug.exceptions import BadRequest
 
         try:
-       		json_data = request.json
-       	except BadRequest:
-       		return make_response("Malformed JSON body in request", 400)
+            json_data = request.json
+        except BadRequest:
+            return make_response("Malformed JSON body in request", 400)
 
-        if not "id" in json_data:
-       		return make_response("No profile included in request", 400)
+        if "id" not in json_data:
+            return make_response("No profile included in request", 400)
 
         identifier = json_data["id"]
         note = json_data["note"] if "note" in json_data else ""
