@@ -103,7 +103,7 @@ def eventHandler(self, event, payload):
                 currentFile["printTime"] = printTime
 
             if "owner" in payload:
-                currentFile["user"] = payload["user"]
+                currentFile["user"] = payload["owner"]
             else:
                 currentFile["user"] = ""
 
