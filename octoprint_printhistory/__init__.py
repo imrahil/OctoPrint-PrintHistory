@@ -292,11 +292,11 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 __plugin_name__ = "Print History Plugin"
 
 def __plugin_load__():
-	global __plugin_implementation__
-	__plugin_implementation__ = PrintHistoryPlugin()
+    global __plugin_implementation__
+    __plugin_implementation__ = PrintHistoryPlugin()
 
-	global __plugin_hooks__
-	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+    global __plugin_hooks__
+    __plugin_hooks__ = {
+        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
         "octoprint.comm.transport.serial.factory": __plugin_implementation__.factory_serial_handler
-	}
+    }
