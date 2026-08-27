@@ -42,7 +42,7 @@ def exportHistoryData(self, exportType):
                       output.append(formatPrintTime(value))
                    else:
                       output.append(value if value is not None else '-')
-                writer.writerow(output);
+                writer.writerow(output)
 
             response = flask.make_response(si.getvalue())
             response.headers["Content-type"] = "text/csv"

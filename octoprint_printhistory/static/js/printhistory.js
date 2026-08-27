@@ -4,7 +4,7 @@ $(function() {
 
         self.loginState = parameters[0];
         self.global_settings = parameters[1];
-        self.users = parameters[2];
+        self.users = parameters[2].users;
 
         self.totalTime = ko.observable();
         self.totalUsage = ko.observable();
@@ -160,7 +160,7 @@ $(function() {
             //}
 
             if (tool0 !== "" && tool1 !== "") {
-                output = "Tool0: " + tool0 + "<br>Tool1: " + tool1;
+                output = "Tool0: " + tool0 + "\nTool1: " + tool1;
             } else {
                 if (tool0 !== "") {
                     output = tool0;
@@ -507,7 +507,7 @@ $(function() {
     ADDITIONAL_VIEWMODELS.push({
         construct: PrintHistoryViewModel,
         name: "PrintHistoryViewModel",
-        dependencies: ["loginStateViewModel", "settingsViewModel", "usersViewModel"],
+        dependencies: ["loginStateViewModel", "settingsViewModel", "accessViewModel"],
         elements: ["#tab_plugin_printhistory", "#settings_plugin_printhistory"]
 });
 });

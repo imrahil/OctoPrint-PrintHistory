@@ -135,6 +135,9 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
             dict(type="settings", template="printhistory_settings.jinja2")
         ]
 
+    def is_template_autoescaped(self):
+        return True
+
     ##~~ AssetPlugin API
     def get_assets(self):
         return {
@@ -208,12 +211,12 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
         from werkzeug.exceptions import BadRequest
 
         try:
-       		json_data = request.json
-       	except BadRequest:
-       		return make_response("Malformed JSON body in request", 400)
+            json_data = request.json
+        except BadRequest:
+            return make_response("Malformed JSON body in request", 400)
 
-        if not "id" in json_data:
-       		return make_response("No profile included in request", 400)
+        if "id" not in json_data:
+            return make_response("No profile included in request", 400)
 
         identifier = json_data["id"]
         note = json_data["note"] if "note" in json_data else ""
@@ -289,11 +292,11 @@ class PrintHistoryPlugin(octoprint.plugin.StartupPlugin,
 __plugin_name__ = "Print History Plugin"
 
 def __plugin_load__():
-	global __plugin_implementation__
-	__plugin_implementation__ = PrintHistoryPlugin()
+    global __plugin_implementation__
+    __plugin_implementation__ = PrintHistoryPlugin()
 
-	global __plugin_hooks__
-	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+    global __plugin_hooks__
+    __plugin_hooks__ = {
+        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
         "octoprint.comm.transport.serial.factory": __plugin_implementation__.factory_serial_handler
-	}
+    }
